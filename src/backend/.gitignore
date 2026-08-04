@@ -1,0 +1,60 @@
+## .NET
+bin/
+obj/
+out/
+
+## Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## ASP.NET Core
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Example.json
+launchSettings.json
+
+## EF Core
+*.db
+*.db-shm
+*.db-wal
+
+## Environment / secrets
+.env
+.env.local
+*.pfx
+*.key
+
+## Docker
+docker-compose.override.yml
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Test results
+[Tt]est[Rr]esult*/
+coverage.info
+coverage.opencover.xml
+*.coverage
+*.coveragexml
