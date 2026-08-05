@@ -1,0 +1,22 @@
+[
+  {
+    "Id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "ClassId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "SubjectId": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+  },
+  {
+    "Id": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+    "ClassId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "SubjectId": "dddddddd-dddd-dddd-dddd-dddddddddddd"
+  },
+  {
+    "Id": "cccccccc-dddd-eeee-ffff-111111111111",
+    "ClassId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "SubjectId": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+  },
+  {
+    "Id": "dddddddd-eeee-ffff-1111-222222222222",
+    "ClassId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "SubjectId": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
+  }
+]

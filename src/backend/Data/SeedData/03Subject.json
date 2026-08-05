@@ -1,0 +1,17 @@
+[
+  {
+    "Id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    "Name": "Mathematics",
+    "Code": "MATH101"
+  },
+  {
+    "Id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+    "Name": "Science",
+    "Code": "SCI101"
+  },
+  {
+    "Id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    "Name": "English",
+    "Code": "ENG101"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "Id": "11111111-1111-aaaa-bbbb-cccccccccccc",
+    "Title": "Algebra Basics",
+    "Description": "Solve the linear equations and provide step-by-step working.",
+    "ClassId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "SubjectId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    "TeacherId": "22222222-2222-2222-2222-222222222222",
+    "Deadline": "2026-08-15T23:59:00Z",
+    "MaxMarks": 100,
+    "Status": 1,
+    "AllowLateSubmission": false,
+    "AllowResubmission": false,
+    "CreatedAt": "2026-08-01T10:00:00Z",
+    "UpdatedAt": "2026-08-01T10:00:00Z"
+  },
+  {
+    "Id": "22222222-1111-aaaa-bbbb-cccccccccccc",
+    "Title": "Chemistry Lab Report",
+    "Description": "Submit a lab report covering observation, analysis, and conclusion.",
+    "ClassId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "SubjectId": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+    "TeacherId": "22222222-2222-2222-2222-222222222222",
+    "Deadline": "2026-08-18T23:59:00Z",
+    "MaxMarks": 50,
+    "Status": 0,
+    "AllowLateSubmission": true,
+    "AllowResubmission": true,
+    "CreatedAt": "2026-08-01T10:15:00Z",
+    "UpdatedAt": "2026-08-01T10:15:00Z"
+  },
+  {
+    "Id": "33333333-1111-aaaa-bbbb-cccccccccccc",
+    "Title": "Trigonometry Practice",
+    "Description": "Complete the practice set on trigonometric identities and applications.",
+    "ClassId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "SubjectId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    "TeacherId": "33333333-3333-3333-3333-333333333333",
+    "Deadline": "2026-08-20T23:59:00Z",
+    "MaxMarks": 80,
+    "Status": 1,
+    "AllowLateSubmission": false,
+    "AllowResubmission": true,
+    "CreatedAt": "2026-08-01T10:30:00Z",
+    "UpdatedAt": "2026-08-02T09:00:00Z"
+  },
+  {
+    "Id": "44444444-1111-aaaa-bbbb-cccccccccccc",
+    "Title": "Essay on Environmental Science",
+    "Description": "Write an essay on sustainability and local environmental challenges.",
+    "ClassId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "SubjectId": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    "TeacherId": "33333333-3333-3333-3333-333333333333",
+    "Deadline": "2026-08-22T23:59:00Z",
+    "MaxMarks": 60,
+    "Status": 1,
+    "AllowLateSubmission": true,
+    "AllowResubmission": false,
+    "CreatedAt": "2026-08-01T10:45:00Z",
+    "UpdatedAt": "2026-08-03T08:00:00Z"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "Id": "11111111-bbbb-cccc-dddd-111111111111",
+    "StudentId": "44444444-4444-4444-4444-444444444444",
+    "ClassId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "EnrolledAt": "2026-07-03T09:00:00Z"
+  },
+  {
+    "Id": "22222222-bbbb-cccc-dddd-222222222222",
+    "StudentId": "55555555-5555-5555-5555-555555555555",
+    "ClassId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "EnrolledAt": "2026-07-03T09:05:00Z"
+  },
+  {
+    "Id": "33333333-bbbb-cccc-dddd-333333333333",
+    "StudentId": "66666666-6666-6666-6666-666666666666",
+    "ClassId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "EnrolledAt": "2026-07-03T09:10:00Z"
+  },
+  {
+    "Id": "44444444-bbbb-cccc-dddd-444444444444",
+    "StudentId": "77777777-7777-7777-7777-777777777777",
+    "ClassId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "EnrolledAt": "2026-07-03T09:12:00Z"
+  }
+]

@@ -24,6 +24,8 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-       modelBuilder.Configure();
+
+        // Configure the model using the extension method
+        modelBuilder.Configure();
     }
 }

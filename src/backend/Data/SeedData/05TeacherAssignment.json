@@ -1,0 +1,22 @@
+[
+  {
+    "Id": "11111111-aaaa-bbbb-cccc-111111111111",
+    "TeacherId": "22222222-2222-2222-2222-222222222222",
+    "ClassSubjectId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+  },
+  {
+    "Id": "22222222-aaaa-bbbb-cccc-222222222222",
+    "TeacherId": "22222222-2222-2222-2222-222222222222",
+    "ClassSubjectId": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+  },
+  {
+    "Id": "33333333-aaaa-bbbb-cccc-333333333333",
+    "TeacherId": "33333333-3333-3333-3333-333333333333",
+    "ClassSubjectId": "cccccccc-dddd-eeee-ffff-111111111111"
+  },
+  {
+    "Id": "44444444-aaaa-bbbb-cccc-444444444444",
+    "TeacherId": "33333333-3333-3333-3333-333333333333",
+    "ClassSubjectId": "dddddddd-eeee-ffff-1111-222222222222"
+  }
+]

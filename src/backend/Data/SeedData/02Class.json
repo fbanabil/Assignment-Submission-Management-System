@@ -1,0 +1,16 @@
+[
+  {
+    "Id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "Name": "Grade 10",
+    "Section": "A",
+    "AcademicYear": "2026-2027",
+    "CreatedAt": "2026-07-02T09:00:00Z"
+  },
+  {
+    "Id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "Name": "Grade 11",
+    "Section": "B",
+    "AcademicYear": "2026-2027",
+    "CreatedAt": "2026-07-02T09:05:00Z"
+  }
+]
