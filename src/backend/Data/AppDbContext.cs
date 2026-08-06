@@ -3,6 +3,7 @@ namespace AssignmentSystem.Api.Data;
 using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Models.Enums;
 using Backend.Data;
+using Backend.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 public class AppDbContext : DbContext
@@ -19,6 +20,7 @@ public class AppDbContext : DbContext
     public DbSet<StudentEnrollment> StudentEnrollments { get; set; }
     public DbSet<Assignment> Assignments { get; set; }
     public DbSet<Submission> Submissions { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AssignmentSystem.Api.Services.Interfaces;
+using Backend.DTOs.UserDTOs;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers
@@ -7,5 +9,25 @@ namespace Backend.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly ILogger<AdminController> _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IUserService _userService;
+        
+
+        public AuthController(ILogger<AdminController> logger, IConfiguration configuration, IUserService userService)
+        {
+            _logger = logger;
+            _configuration = configuration;
+            _userService = userService;
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> CreateUser([FromBody] UserCreateDto dto)
+        {
+            var user = await _userService.CreateUserAsync(dto);
+            return StatusCode(StatusCodes.Status201Created, new { user.Id, user.FullName, user.Email, user.Role });
+            
+        }
     }
 }

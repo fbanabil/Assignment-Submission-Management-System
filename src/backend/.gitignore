@@ -58,3 +58,5 @@ coverage.info
 coverage.opencover.xml
 *.coverage
 *.coveragexml
+
+*.pem

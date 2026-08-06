@@ -1,12 +1,14 @@
 namespace AssignmentSystem.Api.Models.Entities;
 
 using AssignmentSystem.Api.Models.Enums;
+using Backend.Models.Entities;
 
 public class User
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public UserRole Role { get; set; }
     public bool IsActive { get; set; } = true;
@@ -18,4 +20,5 @@ public class User
     public ICollection<Assignment> CreatedAssignments { get; set; } = new List<Assignment>();
     public ICollection<Submission> StudentSubmissions { get; set; } = new List<Submission>();
     public ICollection<Submission> GradedSubmissions { get; set; } = new List<Submission>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

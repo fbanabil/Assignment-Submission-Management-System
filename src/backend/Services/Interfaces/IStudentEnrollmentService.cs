@@ -1,6 +1,5 @@
 namespace AssignmentSystem.Api.Services.Interfaces;
 
-using AssignmentSystem.Api.DTOs;
 using AssignmentSystem.Api.Models.Entities;
 using Backend.DTOs.StudentEnrollmentDTOs;
 

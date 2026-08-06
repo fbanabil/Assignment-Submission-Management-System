@@ -4,6 +4,7 @@
     "FullName": "System Administrator",
     "Email": "admin@assignmentmanager.local",
     "PasswordHash": "AQAAAAIAAYagAAAAEDemoAdminHash000000000000000000000000000000000000000000000000000000",
+    "PhoneNumber": "+201000000001",
     "Role": 0,
     "IsActive": true,
     "CreatedAt": "2026-07-01T08:00:00Z"
@@ -13,6 +14,7 @@
     "FullName": "Amina Hassan",
     "Email": "amina.hassan@assignmentmanager.local",
     "PasswordHash": "AQAAAAIAAYagAAAAEDemoTeacherHash111111111111111111111111111111111111111111111111111111",
+    "PhoneNumber": "+201000000002",
     "Role": 1,
     "IsActive": true,
     "CreatedAt": "2026-07-01T08:10:00Z"
@@ -22,6 +24,7 @@
     "FullName": "Omar Khaled",
     "Email": "omar.khaled@assignmentmanager.local",
     "PasswordHash": "AQAAAAIAAYagAAAAEDemoTeacherHash222222222222222222222222222222222222222222222222222222",
+    "PhoneNumber": "+201000000003",
     "Role": 1,
     "IsActive": true,
     "CreatedAt": "2026-07-01T08:15:00Z"
@@ -31,6 +34,7 @@
     "FullName": "Sara Mahmoud",
     "Email": "sara.mahmoud@assignmentmanager.local",
     "PasswordHash": "AQAAAAIAAYagAAAAEDemoStudentHash333333333333333333333333333333333333333333333333333333",
+    "PhoneNumber": "+201000000004",
     "Role": 2,
     "IsActive": true,
     "CreatedAt": "2026-07-01T08:20:00Z"
@@ -40,6 +44,7 @@
     "FullName": "Youssef Adel",
     "Email": "youssef.adel@assignmentmanager.local",
     "PasswordHash": "AQAAAAIAAYagAAAAEDemoStudentHash444444444444444444444444444444444444444444444444444444",
+    "PhoneNumber": "+201000000005",
     "Role": 2,
     "IsActive": true,
     "CreatedAt": "2026-07-01T08:22:00Z"
@@ -49,6 +54,7 @@
     "FullName": "Mariam Saeed",
     "Email": "mariam.saeed@assignmentmanager.local",
     "PasswordHash": "AQAAAAIAAYagAAAAEDemoStudentHash555555555555555555555555555555555555555555555555555555",
+    "PhoneNumber": "+201000000006",
     "Role": 2,
     "IsActive": true,
     "CreatedAt": "2026-07-01T08:24:00Z"
@@ -58,6 +64,7 @@
     "FullName": "Hassan Tarek",
     "Email": "hassan.tarek@assignmentmanager.local",
     "PasswordHash": "AQAAAAIAAYagAAAAEDemoStudentHash666666666666666666666666666666666666666666666666666666",
+    "PhoneNumber": "+201000000007",
     "Role": 2,
     "IsActive": true,
     "CreatedAt": "2026-07-01T08:26:00Z"

@@ -1,4 +1,5 @@
 ﻿using AssignmentSystem.Api.Models.Entities;
+using Backend.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data
@@ -13,6 +14,9 @@ namespace Backend.Data
                 entity.HasKey(e => e.Id);
 
                 entity.HasIndex(e => e.Email).IsUnique();
+
+                entity.Property(e=>e.PhoneNumber)
+                    .HasMaxLength(20);
 
                 entity.Property(e => e.FullName)
                     .IsRequired()
@@ -246,6 +250,24 @@ namespace Backend.Data
                     .WithMany(u => u.GradedSubmissions)
                     .HasForeignKey(e => e.GradedBy)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            // RefreshToken configuration
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Token)
+                    .IsRequired()
+                    .HasMaxLength(500);
+                entity.Property(e => e.ExpiresAt)
+                    .IsRequired();
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
+                entity.HasOne(e => e.User)
+                    .WithMany(u => u.RefreshTokens)
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         }

@@ -1,19 +1,25 @@
 namespace AssignmentSystem.Api.Services.Services;
 
 using AssignmentSystem.Api.Data;
-using AssignmentSystem.Api.DTOs;
 using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.UserDTOs;
+using Backend.Helpers;
+using Backend.Middlewares;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 public class UserService : IUserService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<UserService> _logger;
+    private readonly IPasswordHelper _passwordHelper;
 
-    public UserService(AppDbContext context)
+    public UserService(AppDbContext context, IPasswordHelper passwordHelper, ILogger<UserService> logger)
     {
         _context = context;
+        _passwordHelper = passwordHelper;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<User>> GetAllUsersAsync() =>
@@ -22,20 +28,49 @@ public class UserService : IUserService
     public async Task<User?> GetUserByIdAsync(Guid id) =>
         await _context.Users.FindAsync(id);
 
+
+
+
+    // This method creates a new user in the database using the provided UserCreateDto.
     public async Task<User> CreateUserAsync(UserCreateDto dto)
     {
+        bool exists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+
+        if (exists)
+        {
+            throw new BadRequestException("A user with this email already exists.");
+        }
+
+
         var user = new User
         {
+            Id = Guid.NewGuid(),
             FullName = dto.FullName,
             Email = dto.Email,
-            PasswordHash = dto.Password, // Typically hashed here
-            Role = dto.Role
+            PasswordHash = await _passwordHelper.HashPassword(dto.Password),
+            Role = dto.Role,
+            PhoneNumber = dto.PhoneNumber,
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "An error occurred while creating a new user.");
+            throw new Exception("An error occurred while creating a new user. Please try again later.");
+        }
+
         return user;
     }
+
+
+
 
     public async Task UpdateUserAsync(Guid id, UserUpdateDto dto)
     {

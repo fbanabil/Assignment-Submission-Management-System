@@ -1,11 +1,11 @@
 ﻿using AssignmentSystem.Api.Data;
-using AssignmentSystem.Api.Repositories;
-using AssignmentSystem.Api.Repositories.Interfaces;
 using AssignmentSystem.Api.Services.Interfaces;
 using AssignmentSystem.Api.Services.Services;
 using Backend.Helpers;
-using Backend.Repositories.Repositories;
+using Backend.Middlewares;
 using Backend.StartupTasks;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.ConfigurationExtension;
@@ -19,34 +19,30 @@ public static class AddConfigurations
         services.AddSwaggerGen();
         services.AddOpenApi();
 
-
+        services.AddValidatorsFromAssemblyContaining<Program>();
+        services.AddFluentValidationAutoValidation();
+        services.AddFluentValidationClientsideAdapters();
 
         // Register DbContext
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
 
+        // Middleware Configuration
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
+
+
 
         // Register Helpers
         services.AddSingleton<SeedHelper>();
+        services.AddSingleton<IPasswordHelper, PasswordHelper>();
 
 
 
 
         // Register Startup Tasks
         services.AddHostedService<SeedDataToDatabase>();
-
-
-        // Register Repositories
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IClassRepository, ClassRepository>();
-        services.AddScoped<ISubjectRepository, SubjectRepository>();
-        services.AddScoped<IClassSubjectRepository, ClassSubjectRepository>();
-        services.AddScoped<ITeacherAssignmentRepository, TeacherAssignmentRepository>();
-        services.AddScoped<IStudentEnrollmentRepository, StudentEnrollmentRepository>();
-        services.AddScoped<IAssignmentRepository, AssignmentRepository>();
-        services.AddScoped<ISubmissionRepository, SubmissionRepository>();
-
 
 
         // Register Services

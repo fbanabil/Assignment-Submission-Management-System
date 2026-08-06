@@ -23,5 +23,13 @@ public class UserCreateDtoValidator : AbstractValidator<UserCreateDto>
 
         RuleFor(x => x.Role)
             .IsInEnum().WithMessage("Role must be a valid user role.");
+
+        RuleFor(x=>x.PhoneNumber)
+            .NotNull().WithMessage("Phone number is required.")
+            // Only + and digits allowed
+            .Must(phone => System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?\d+$")).WithMessage("Phone number must contain only digits and may start with a +.");
+
+        RuleFor(x=>x.ConfirmPassword)
+            .Equal(x => x.Password).WithMessage("Confirm password must match the password.");
     }
 }
