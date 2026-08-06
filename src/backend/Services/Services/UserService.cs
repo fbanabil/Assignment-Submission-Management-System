@@ -6,19 +6,24 @@ using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.UserDTOs;
 using Backend.Helpers;
 using Backend.Middlewares;
+using Backend.Models.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 public class UserService : IUserService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<UserService> _logger;
     private readonly IPasswordHelper _passwordHelper;
+    private readonly IAuthenticationHelper _authenticationHelper;
 
-    public UserService(AppDbContext context, IPasswordHelper passwordHelper, ILogger<UserService> logger)
+    public UserService(AppDbContext context, IPasswordHelper passwordHelper, ILogger<UserService> logger, IAuthenticationHelper authenticationHelper)
     {
         _context = context;
         _passwordHelper = passwordHelper;
+        _logger = logger;
+        _authenticationHelper = authenticationHelper;
         _logger = logger;
     }
 
@@ -93,5 +98,53 @@ public class UserService : IUserService
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<User?> AuthenticateUserAsync(string email, string password)
+    {
+        User? user = _context.Users.FirstOrDefault(u => u.Email == email);
+        if(user != null)
+        {
+            bool isPasswordValid = await _passwordHelper.VerifyPassword(password, user.PasswordHash);
+            if(isPasswordValid)
+            {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public async Task<string> GenerateJwtToken(User user)
+    {
+        UserPayload payload = new UserPayload(UserId: user.Id.ToString(), FullName: user.FullName, Email: user.Email, Roles: new List<string> { user.Role.ToString() });
+
+        string token = await _authenticationHelper.CreateJwtToken(payload);
+        return token;
+    }
+
+    public async Task<string> GenerateRefreshToken()
+    {
+        string refreshToken = await _authenticationHelper.CreateRefreshTokenAsync();
+        string hashedRefreshToken = await _authenticationHelper.HashTokenAsync(refreshToken);
+
+        try
+        {
+            await _context.RefreshTokens.AddAsync(new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                Token = hashedRefreshToken,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(7), // Set expiration as needed
+                IsUsed = false
+            });
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "An error occurred while creating a new refresh token.");
+            throw new Exception("An error occurred while creating a new refresh token. Please try again later.");
+        }
+
+        return refreshToken;
     }
 }

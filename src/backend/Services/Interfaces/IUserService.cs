@@ -10,4 +10,7 @@ public interface IUserService
     Task<User> CreateUserAsync(UserCreateDto dto);
     Task UpdateUserAsync(Guid id, UserUpdateDto dto);
     Task DeleteUserAsync(Guid id);
+    Task<User?> AuthenticateUserAsync(string email, string password);
+    Task<string> GenerateJwtToken(User user);
+    Task<string> GenerateRefreshToken();
 }

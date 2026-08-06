@@ -41,6 +41,7 @@ public static class AddConfigurations
         // Register Helpers
         services.AddSingleton<SeedHelper>();
         services.AddSingleton<IPasswordHelper, PasswordHelper>();
+        services.AddScoped<IAuthenticationHelper, AuthenticationHelper>();
 
 
 
