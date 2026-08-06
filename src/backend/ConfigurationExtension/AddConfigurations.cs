@@ -6,7 +6,11 @@ using Backend.Middlewares;
 using Backend.StartupTasks;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace Backend.ConfigurationExtension;
 
@@ -54,5 +58,47 @@ public static class AddConfigurations
         services.AddScoped<IStudentEnrollmentService, StudentEnrollmentService>();
         services.AddScoped<IAssignmentService, AssignmentService>();
         services.AddScoped<ISubmissionService, SubmissionService>();
+
+
+
+
+        // Add Authentication and Authorization
+        var jwtSettingsSection = configuration.GetSection("JwtSettings");
+        var publicKey = jwtSettingsSection.GetValue<string>("PublicKey");
+
+        var rsa = RSA.Create();
+        rsa.ImportFromPem(publicKey);
+
+        var rsaSecurityKey = new RsaSecurityKey(rsa);
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = jwtSettingsSection.GetValue<string>("Issuer"),
+                    ValidAudience = jwtSettingsSection.GetValue<string>("Audience"),
+                    IssuerSigningKey = rsaSecurityKey
+                };
+            });
+
+
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("TeacherOnly", policy => policy.RequireRole("Teacher"));
+            options.AddPolicy("StudentOnly", policy => policy.RequireRole("Student"));
+        });
+
     }
 }
