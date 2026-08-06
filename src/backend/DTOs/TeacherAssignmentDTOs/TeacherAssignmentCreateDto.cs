@@ -1,4 +1,4 @@
-namespace AssignmentSystem.Api.DTOs;
+namespace Backend.DTOs.TeacherAssignmentDTOs;
 
 public class TeacherAssignmentCreateDto
 {

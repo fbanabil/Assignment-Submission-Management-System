@@ -1,6 +1,6 @@
 namespace AssignmentSystem.Api.Validators;
 
-using AssignmentSystem.Api.DTOs;
+using Backend.DTOs.SubmissionDTOs;
 using FluentValidation;
 
 public class SubmissionUpdateDtoValidator : AbstractValidator<SubmissionUpdateDto>

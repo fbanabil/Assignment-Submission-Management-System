@@ -1,7 +1,7 @@
 namespace AssignmentSystem.Api.Validators;
 
-using AssignmentSystem.Api.DTOs;
 using AssignmentSystem.Api.Models.Enums;
+using Backend.DTOs.UserDTOs;
 using FluentValidation;
 
 public class UserUpdateDtoValidator : AbstractValidator<UserUpdateDto>

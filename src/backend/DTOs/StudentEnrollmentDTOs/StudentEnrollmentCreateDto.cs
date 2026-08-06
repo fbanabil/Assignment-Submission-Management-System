@@ -1,4 +1,4 @@
-namespace AssignmentSystem.Api.DTOs;
+namespace Backend.DTOs.StudentEnrollmentDTOs;
 
 public class StudentEnrollmentCreateDto
 {

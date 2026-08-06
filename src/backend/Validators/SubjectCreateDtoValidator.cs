@@ -1,6 +1,6 @@
 namespace AssignmentSystem.Api.Validators;
 
-using AssignmentSystem.Api.DTOs;
+using Backend.DTOs.SubjectDTOs;
 using FluentValidation;
 using System.Text.RegularExpressions;
 

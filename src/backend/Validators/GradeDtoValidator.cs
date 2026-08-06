@@ -1,6 +1,6 @@
 namespace AssignmentSystem.Api.Validators;
 
-using AssignmentSystem.Api.DTOs;
+using Backend.DTOs.SubjectDTOs;
 using FluentValidation;
 
 public class GradeDtoValidator : AbstractValidator<GradeDto>
