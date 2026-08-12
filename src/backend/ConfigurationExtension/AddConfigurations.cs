@@ -27,9 +27,16 @@ public static class AddConfigurations
         services.AddFluentValidationAutoValidation();
         services.AddFluentValidationClientsideAdapters();
 
+        services.AddHttpContextAccessor();
+
         // Register DbContext
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+
+        // Add Cache for Token Blacklist
+        services.AddDistributedMemoryCache();
+
 
 
         // Middleware Configuration
@@ -38,12 +45,12 @@ public static class AddConfigurations
 
 
 
+
         // Register Helpers
         services.AddSingleton<SeedHelper>();
         services.AddSingleton<IPasswordHelper, PasswordHelper>();
         services.AddScoped<IAuthenticationHelper, AuthenticationHelper>();
-
-
+        services.AddScoped<ITokenBlacklistRepository, CacheTokenBlacklistRepository>();
 
 
         // Register Startup Tasks

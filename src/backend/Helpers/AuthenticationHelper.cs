@@ -28,11 +28,15 @@ namespace Backend.Helpers
 
         public Task<string> CreateJwtToken(UserPayload payload)
         {
+            // Create a JWT token using RSA private key from configuration
             using var rsa = System.Security.Cryptography.RSA.Create();
             rsa.ImportFromPem(_configuration["JwtSettings:PrivateKey"]);
 
+            // Create signing credentials using the RSA private key
             var key = new RsaSecurityKey(rsa.ExportParameters(true));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
+
+            // Create claims based on the user payload
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, payload.UserId),
@@ -41,6 +45,7 @@ namespace Backend.Helpers
             };
             claims.AddRange(payload.Roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
+            // Create the JWT token
             var token = new JwtSecurityToken(
                 issuer: _configuration["JwtSettings:Issuer"],
                 audience: _configuration["JwtSettings:Audience"],
@@ -58,7 +63,7 @@ namespace Backend.Helpers
 
         public async Task<string> CreateRefreshTokenAsync()
         {
-
+            // Generate a secure random refresh token
             var bytes = RandomNumberGenerator.GetBytes(32);
             var token = Convert.ToBase64String(bytes)
                 .Replace("+", "-")
@@ -69,6 +74,7 @@ namespace Backend.Helpers
 
         public async Task<string> HashTokenAsync(string token)
         {
+            // Hash the token using SHA256 and return a URL-safe base64 string
             using var sha256 = SHA256.Create();
             var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(token));
             var hashedToken = Convert.ToBase64String(hashBytes)
@@ -80,6 +86,7 @@ namespace Backend.Helpers
 
         public async Task<bool> VerifyRefreshTokenAsync(string token, string hashedToken)
         {
+            // Hash the provided token and compare it with the stored hashed token using a constant-time comparison
             var expectedHashedToken = await HashTokenAsync(token);
 
             return CryptographicOperations.FixedTimeEquals(

@@ -12,5 +12,7 @@ public interface IUserService
     Task DeleteUserAsync(Guid id);
     Task<User?> AuthenticateUserAsync(string email, string password);
     Task<string> GenerateJwtToken(User user);
-    Task<string> GenerateRefreshToken();
+    Task<string> GenerateRefreshToken(User user);
+    Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+    Task InvalidateRefreshTokenAndJwtToken(string jwtToken, string refreshTokenFromCookie);
 }

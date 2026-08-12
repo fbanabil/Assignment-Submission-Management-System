@@ -48,6 +48,13 @@ namespace Backend.ConfigurationExtension
             //app.UseCors("AllowAll");
 
 
+
+            app.UseMiddleware<TokenBlacklistMiddleware>();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+
             app.MapControllers();
         }
     }
