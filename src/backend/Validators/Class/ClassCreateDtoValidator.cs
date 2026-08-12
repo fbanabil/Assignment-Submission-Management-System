@@ -1,4 +1,4 @@
-namespace AssignmentSystem.Api.Validators;
+namespace Backend.Validators.Class;
 
 using Backend.DTOs.ClassDTOs;
 using FluentValidation;

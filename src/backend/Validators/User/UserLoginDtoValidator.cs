@@ -1,7 +1,7 @@
 ﻿using Backend.DTOs.UserDTOs;
 using FluentValidation;
 
-namespace Backend.Validators
+namespace Backend.Validators.User
 {
     public class UserLoginDtoValidator : AbstractValidator<UserLoginDto>
     {

@@ -1,4 +1,4 @@
-namespace AssignmentSystem.Api.Validators;
+namespace Backend.Validators.User;
 
 using AssignmentSystem.Api.Models.Enums;
 using Backend.DTOs.UserDTOs;

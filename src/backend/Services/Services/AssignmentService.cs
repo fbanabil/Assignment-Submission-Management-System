@@ -2,7 +2,9 @@ namespace AssignmentSystem.Api.Services.Services;
 
 using AssignmentSystem.Api.Data;
 using AssignmentSystem.Api.Models.Entities;
+using AssignmentSystem.Api.Models.Enums;
 using AssignmentSystem.Api.Services.Interfaces;
+using Backend.DTOs;
 using Backend.DTOs.AssignmentDTOs;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,5 +76,32 @@ public class AssignmentService : IAssignmentService
             _context.Assignments.Remove(assignment);
             await _context.SaveChangesAsync();
         }
+    }
+
+
+
+    /// <summary>
+    /// This method retrieves a summary of assignments, including total assignments, active assignments, draft assignments, due soon assignments, completion rate, and a breakdown of assignments by status.
+    /// </summary>
+    /// <returns>An AssignmentSummaryDto containing the summary of assignments.</returns>
+    public async Task<AssignmentSummaryDto> GetAssignmentSummaryAsync()
+    {
+        AssignmentSummaryDto assignmentSummaryDto = new AssignmentSummaryDto()
+        {
+            TotalAssignments = await _context.Assignments.CountAsync(),
+            ActiveAssignments = await _context.Assignments.CountAsync(a => a.Deadline > DateTime.UtcNow),
+            DraftAssignments = await _context.Assignments.CountAsync(a => a.Status == AssignmentStatus.Draft),
+            DueSoonAssignments = await _context.Assignments.CountAsync(a => a.Deadline <= DateTime.UtcNow.AddDays(3) && a.Deadline > DateTime.UtcNow),
+            CompletionRate = await _context.Assignments.CountAsync(a => a.Status == AssignmentStatus.Published) * 100 / (await _context.Assignments.CountAsync() == 0 ? 1 : await _context.Assignments.CountAsync()),
+            StatusBreakdown = await _context.Assignments
+                .GroupBy(a => a.Status)
+                .Select(g => new AssignmentStatusSummaryDto
+                {
+                    Status = g.Key.ToString(),
+                    Count = g.Count()
+                })
+                .ToListAsync()
+        };
+        return assignmentSummaryDto;
     }
 }

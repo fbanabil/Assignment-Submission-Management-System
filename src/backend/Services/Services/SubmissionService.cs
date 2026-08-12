@@ -4,6 +4,7 @@ using AssignmentSystem.Api.Data;
 using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Models.Enums;
 using AssignmentSystem.Api.Services.Interfaces;
+using Backend.DTOs;
 using Backend.DTOs.SubjectDTOs;
 using Backend.DTOs.SubmissionDTOs;
 using Microsoft.EntityFrameworkCore;
@@ -66,5 +67,31 @@ public class SubmissionService : ISubmissionService
         submission.Status = SubmissionStatus.Graded;
 
         await _context.SaveChangesAsync();
+    }
+
+
+
+
+    public async Task<SubmissionSummaryDto> GetSubmissionSummaryAsync()
+    {
+        SubmissionSummaryDto submissionSummaryDto = new SubmissionSummaryDto()
+        {
+            TotalSubmissions = await _context.Submissions.CountAsync(),
+            SubmittedToday = await _context.Submissions.CountAsync(s => s.SubmittedAt.Date == DateTime.UtcNow.Date),
+            PendingReview = await _context.Submissions.CountAsync(s => s.Status == SubmissionStatus.Submitted),
+            GradedSubmissions = await _context.Submissions.CountAsync(s => s.Status == SubmissionStatus.Graded),
+            WeeklyVolumes = await _context.Submissions
+                .Where(s => s.SubmittedAt >= DateTime.UtcNow.AddDays(-7))
+                // group by day of the week and count the number of submissions for each day
+                .GroupBy(s => s.SubmittedAt.Date)
+                .Select(g => new SubmissionVolumeDto
+                {
+                    // Label = g.Key.ToString("dddd"), // day of the week only 1st 3 letter
+                    Label = new string(g.Key.ToString("dddd").Take(3).ToArray()), // date
+                    Count = g.Count()
+                })
+                .ToListAsync()
+        };
+        return submissionSummaryDto;
     }
 }

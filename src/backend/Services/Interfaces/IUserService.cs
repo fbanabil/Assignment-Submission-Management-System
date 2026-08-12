@@ -1,6 +1,7 @@
 namespace AssignmentSystem.Api.Services.Interfaces;
 
 using AssignmentSystem.Api.Models.Entities;
+using Backend.DTOs;
 using Backend.DTOs.UserDTOs;
 
 public interface IUserService
@@ -15,4 +16,5 @@ public interface IUserService
     Task<string> GenerateRefreshToken(User user);
     Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
     Task InvalidateRefreshTokenAndJwtToken(string jwtToken, string refreshTokenFromCookie);
+    Task<UserSummaryDto> GetUserSummaryAsync();
 }

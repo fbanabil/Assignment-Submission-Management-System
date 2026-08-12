@@ -1,56 +1,66 @@
-export type DataSource = "api" | "demo";
+export type DataSource = string;
 
-export type UserRoleBreakdownItem = {
+export type UserRoleSummaryDto = {
   role: "Admin" | "Teacher" | "Student";
   count: number;
 };
 
-export type AdminUsersDto = {
+export type UserSummaryDto = {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
   newUsersThisMonth: number;
-  roleBreakdown: UserRoleBreakdownItem[];
+  roleBreakdown: UserRoleSummaryDto[];
 };
 
-export type AssignmentStatusBreakdownItem = {
+export type AssignmentStatusSummaryDto = {
   status: "Draft" | "Published" | "Archived";
   count: number;
 };
 
-export type AdminAssignmentsDto = {
+export type AssignmentSummaryDto = {
   totalAssignments: number;
   activeAssignments: number;
   draftAssignments: number;
   dueSoonAssignments: number;
   completionRate: number;
-  statusBreakdown: AssignmentStatusBreakdownItem[];
+  statusBreakdown: AssignmentStatusSummaryDto[];
 };
 
-export type WeeklyVolumeItem = {
+export type SubmissionVolumeDto = {
   label: string;
   count: number;
 };
 
-export type AdminSubmissionsDto = {
+export type SubmissionSummaryDto = {
   totalSubmissions: number;
   submittedToday: number;
   pendingReview: number;
   gradedSubmissions: number;
-  weeklyVolumes: WeeklyVolumeItem[];
+  weeklyVolumes: SubmissionVolumeDto[];
 };
 
-export type AdminDashboardSnapshot = {
+export type DashboardSummaryDto = {
   dataSource: DataSource;
   fetchedAt: string;
-  users: AdminUsersDto;
-  assignments: AdminAssignmentsDto;
-  submissions: AdminSubmissionsDto;
+  users: UserSummaryDto;
+  assignments: AssignmentSummaryDto;
+  submissions: SubmissionSummaryDto;
 };
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
+export type DashboardApiResponse = {
+  dataSource: string;
+  fetchedAt: string;
+  users: UserSummaryDto;
+  assignments: AssignmentSummaryDto;
+  submissions: SubmissionSummaryDto;
+};
 
-const demoUsers: AdminUsersDto = {
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+
+const demoUsers: UserSummaryDto = {
   totalUsers: 248,
   activeUsers: 221,
   inactiveUsers: 27,
@@ -62,7 +72,7 @@ const demoUsers: AdminUsersDto = {
   ],
 };
 
-const demoAssignments: AdminAssignmentsDto = {
+const demoAssignments: AssignmentSummaryDto = {
   totalAssignments: 86,
   activeAssignments: 37,
   draftAssignments: 11,
@@ -75,7 +85,7 @@ const demoAssignments: AdminAssignmentsDto = {
   ],
 };
 
-const demoSubmissions: AdminSubmissionsDto = {
+const demoSubmissions: SubmissionSummaryDto = {
   totalSubmissions: 1482,
   submittedToday: 74,
   pendingReview: 38,
@@ -91,6 +101,24 @@ const demoSubmissions: AdminSubmissionsDto = {
   ],
 };
 
+const demoDashboardData: DashboardApiResponse = {
+  dataSource: "demo",
+  fetchedAt: new Date().toISOString(),
+  users: demoUsers,
+  assignments: demoAssignments,
+  submissions: demoSubmissions,
+};
+
+class DashboardRequestError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "DashboardRequestError";
+  }
+}
+
 async function requestJson<T>(path: string, fallback: T): Promise<T> {
   if (!apiBaseUrl) {
     return fallback;
@@ -102,27 +130,44 @@ async function requestJson<T>(path: string, fallback: T): Promise<T> {
     });
 
     if (!response.ok) {
-      return fallback;
+      const contentType = response.headers.get("content-type") ?? "";
+      let serverMessage = response.statusText;
+
+      if (contentType.includes("application/json")) {
+        const payload = (await response.json()) as { message?: string; error?: string; title?: string };
+        serverMessage = payload.message ?? payload.error ?? payload.title ?? serverMessage;
+      } else {
+        const body = await response.text();
+        if (body.trim()) {
+          serverMessage = body.trim();
+        }
+      }
+
+      throw new DashboardRequestError(response.status, `${response.status} ${serverMessage}`.trim());
     }
 
     return (await response.json()) as T;
-  } catch {
-    return fallback;
+  } catch (error) {
+    if (error instanceof DashboardRequestError) {
+      throw error;
+    }
+
+    throw new Error(`Unable to fetch ${path}`);
   }
 }
 
-export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapshot> {
-  const [users, assignments, submissions] = await Promise.all([
-    requestJson<AdminUsersDto>("/admin/dashboard/users", demoUsers),
-    requestJson<AdminAssignmentsDto>("/admin/dashboard/assignments", demoAssignments),
-    requestJson<AdminSubmissionsDto>("/admin/dashboard/submissions", demoSubmissions),
-  ]);
+export async function getDashboardSummarySnapshot(): Promise<DashboardSummaryDto> {
+  if (!apiBaseUrl) {
+    return demoDashboardData;
+  }
+
+  const data = await requestJson<DashboardApiResponse>("/Admin/Dashboard/summary", demoDashboardData);
 
   return {
-    dataSource: apiBaseUrl ? "api" : "demo",
-    fetchedAt: new Date().toISOString(),
-    users,
-    assignments,
-    submissions,
+    dataSource: data.dataSource,
+    fetchedAt: data.fetchedAt,
+    users: data.users,
+    assignments: data.assignments,
+    submissions: data.submissions,
   };
 }

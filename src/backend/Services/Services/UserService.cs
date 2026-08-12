@@ -3,6 +3,7 @@ namespace AssignmentSystem.Api.Services.Services;
 using AssignmentSystem.Api.Data;
 using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Services.Interfaces;
+using Backend.DTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Helpers;
 using Backend.Middlewares;
@@ -312,5 +313,31 @@ public class UserService : IUserService
             _logger.LogError(ex, "An error occurred while invalidating tokens.");
             throw new Exception("An error occurred while invalidating tokens. Please try again later.");
         }
+    }
+
+
+
+    /// <summary>
+    /// This method retrieves a summary of user statistics, including total users, active users, inactive users, new users this month, and a breakdown of users by role. It uses LINQ queries to count the relevant user data and groups users by their roles to create a list of UserRoleSummaryDto objects. The resulting UserSummaryDto object is returned.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the UserSummaryDto object.</returns>
+    public async Task<UserSummaryDto> GetUserSummaryAsync()
+    {
+        var userSummary = new UserSummaryDto
+        {
+            TotalUsers = await _context.Users.CountAsync(),
+            ActiveUsers = await _context.Users.CountAsync(u => u.IsActive),
+            InactiveUsers = await _context.Users.CountAsync(u => !u.IsActive),
+            NewUsersThisMonth = await _context.Users.CountAsync(u => u.CreatedAt >= DateTime.UtcNow.AddMonths(-1)),
+            RoleBreakdown = await _context.Users
+                .GroupBy(u => u.Role)
+                .Select(g => new UserRoleSummaryDto
+                {
+                    Role = g.Key.ToString(),
+                    Count = g.Count()
+                })
+                .ToListAsync()
+        };
+        return userSummary;
     }
 }

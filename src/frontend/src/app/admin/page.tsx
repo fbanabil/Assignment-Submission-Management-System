@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
-import { AdminDashboard } from "@/components/admin-dashboard";
-import { getAdminDashboardSnapshot } from "@/lib/admin-dashboard";
+import { DashboardSummary } from "@/components/admin-dashboard";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | Assignment Manager",
@@ -10,8 +9,6 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboardPage() {
-  const snapshot = await getAdminDashboardSnapshot();
-
-  return <AdminDashboard snapshot={snapshot} />;
+export default function AdminDashboardPage() {
+  return <DashboardSummary />;
 }

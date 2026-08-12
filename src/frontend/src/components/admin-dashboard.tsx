@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
-import type { AdminDashboardSnapshot } from "@/lib/admin-dashboard";
+import { getDashboardSummarySnapshot, type DashboardSummaryDto } from "@/lib/admin-dashboard";
 
 type StatCardProps = {
   label: string;
@@ -70,8 +73,8 @@ function BarChart({ items }: { items: { label: string; count: number }[] }) {
 
   return (
     <div className="grid grid-cols-7 gap-3 sm:gap-4">
-      {items.map((item) => (
-        <div key={item.label} className="flex flex-col items-center gap-2">
+      {items.map((item, index) => (
+        <div key={`${item.label}-${index}`} className="flex flex-col items-center gap-2">
           <div className="flex h-40 w-full items-end rounded-2xl border border-black/5 bg-white/80 p-2 shadow-sm">
             <div
               className="w-full rounded-xl bg-linear-to-t from-teal-500 via-cyan-400 to-blue-400"
@@ -87,7 +90,67 @@ function BarChart({ items }: { items: { label: string; count: number }[] }) {
   );
 }
 
-export function AdminDashboard({ snapshot }: { snapshot: AdminDashboardSnapshot }) {
+export function DashboardSummary() {
+  const [snapshot, setSnapshot] = useState<DashboardSummaryDto | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSnapshot() {
+      try {
+        const data = await getDashboardSummarySnapshot();
+
+        if (active) {
+          setSnapshot(data);
+          console.log(data);
+          setError(null);
+        }
+      } catch (loadError) {
+        if (active) {
+          console.error(loadError);
+          setError(loadError instanceof Error ? loadError.message : "Unable to load dashboard data.");
+        }
+      }
+    }
+
+    loadSnapshot();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-4xl border border-rose-200 bg-white/90 p-8 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-600">Dashboard error</p>
+          <h1 className="text-2xl font-semibold text-foreground">Unable to load admin summary</h1>
+          <p className="text-sm leading-6 text-(--color-muted)">{error}</p>
+          <p className="text-sm leading-6 text-(--color-muted)">
+            Check that <span className="font-semibold text-foreground">NEXT_PUBLIC_API_BASE_URL</span> points to your backend and that the endpoint responds from the browser.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!snapshot) {
+    return (
+      <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div className="h-56 animate-pulse rounded-4xl border border-white/70 bg-white/70 shadow-[0_16px_50px_rgba(15,23,42,0.08)]" />
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="h-40 animate-pulse rounded-3xl border border-white/70 bg-white/70" />
+            <div className="h-40 animate-pulse rounded-3xl border border-white/70 bg-white/70" />
+            <div className="h-40 animate-pulse rounded-3xl border border-white/70 bg-white/70" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const totalUsers = formatNumber(snapshot.users.totalUsers);
   const activeAssignments = formatNumber(snapshot.assignments.activeAssignments);
   const totalSubmissions = formatNumber(snapshot.submissions.totalSubmissions);
@@ -112,7 +175,7 @@ export function AdminDashboard({ snapshot }: { snapshot: AdminDashboardSnapshot 
 
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span className="rounded-full border border-black/5 bg-white px-4 py-2 font-medium text-foreground shadow-sm">
-                Source: {snapshot.dataSource === "api" ? "Backend API" : "Demo data"}
+                Source: {snapshot.dataSource}
               </span>
               <span className="rounded-full border border-black/5 bg-white px-4 py-2 font-medium text-foreground shadow-sm">
                 Refreshed {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(snapshot.fetchedAt))}
@@ -124,8 +187,8 @@ export function AdminDashboard({ snapshot }: { snapshot: AdminDashboardSnapshot 
             <Link className="rounded-full bg-foreground px-4 py-2 text-background transition hover:opacity-90" href="#overview">
               Overview
             </Link>
-            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="#users">
-              Users
+            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/users">
+              User Management
             </Link>
             <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="#assignments">
               Assignments

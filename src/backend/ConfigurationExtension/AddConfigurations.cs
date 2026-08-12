@@ -45,6 +45,17 @@ public static class AddConfigurations
 
 
 
+        // Add CORS
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            });
+        });
+
 
         // Register Helpers
         services.AddSingleton<SeedHelper>();

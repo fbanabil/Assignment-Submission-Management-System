@@ -51,6 +51,7 @@ namespace Backend.ConfigurationExtension
 
             app.UseMiddleware<TokenBlacklistMiddleware>();
 
+            app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
 

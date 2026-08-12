@@ -1,6 +1,7 @@
 namespace AssignmentSystem.Api.Services.Interfaces;
 
 using AssignmentSystem.Api.Models.Entities;
+using Backend.DTOs;
 using Backend.DTOs.SubjectDTOs;
 using Backend.DTOs.SubmissionDTOs;
 
@@ -11,4 +12,5 @@ public interface ISubmissionService
     Task<Submission> CreateSubmissionAsync(SubmissionCreateDto dto);
     Task UpdateSubmissionAsync(Guid id, SubmissionUpdateDto dto);
     Task GradeSubmissionAsync(GradeDto dto, Guid graderId);
+    Task<SubmissionSummaryDto> GetSubmissionSummaryAsync();
 }
