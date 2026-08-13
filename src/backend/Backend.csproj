@@ -37,8 +37,8 @@
     <Folder Include="Handlers\Admin\" />
     <Folder Include="Handlers\Student\" />
     <Folder Include="Handlers\Teacher\" />
-    <Folder Include="wwwroot\" />
     <Folder Include="Tests\" />
+    <Folder Include="wwwroot\assignments\" />
   </ItemGroup>
 
 </Project>

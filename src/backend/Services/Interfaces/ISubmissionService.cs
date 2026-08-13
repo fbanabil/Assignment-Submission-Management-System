@@ -4,6 +4,7 @@ using AssignmentSystem.Api.Models.Entities;
 using Backend.DTOs;
 using Backend.DTOs.SubjectDTOs;
 using Backend.DTOs.SubmissionDTOs;
+using Backend.DTOs.UserDTOs;
 
 public interface ISubmissionService
 {
@@ -13,4 +14,5 @@ public interface ISubmissionService
     Task UpdateSubmissionAsync(Guid id, SubmissionUpdateDto dto);
     Task GradeSubmissionAsync(GradeDto dto, Guid graderId);
     Task<SubmissionSummaryDto> GetSubmissionSummaryAsync();
+    Task<PagedResultDto<SubmissionResponseDto>> GetSubmissionsAsync(SubmissionFilterDto filterDto);
 }

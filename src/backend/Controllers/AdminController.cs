@@ -4,6 +4,7 @@ using Backend.DTOs.AssignmentDTOs;
 using Backend.DTOs.ClassDTOs;
 using Backend.DTOs.ClassSubjectDTOs;
 using Backend.DTOs.SubjectDTOs;
+using Backend.DTOs.SubmissionDTOs;
 using Backend.DTOs.TeacherAssignmentDTOs;
 using Backend.DTOs.UserDTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -358,5 +359,21 @@ namespace Backend.Controllers
 
 
 
+
+        /// <summary>
+        /// This endpoint retrieves a paginated list of submissions based on the provided filter parameters. It allows filtering by class name, assignment title, student name, student email, and submission status. The results are returned in a paginated format.
+        /// </summary>
+        /// <param name="filterDto">The filter criteria and pagination information.</param>
+        /// <returns>A paginated list of submissions.</returns>
+        [HttpGet]
+        public async Task<IActionResult> Submissions([FromQuery] SubmissionFilterDto filterDto)
+        {
+            if (filterDto == null)
+            {
+                return BadRequest("Filter parameters are required.");
+            }
+            PagedResultDto<SubmissionResponseDto> pagedSubmissions = await _submissionService.GetSubmissionsAsync(filterDto);
+            return Ok(pagedSubmissions);
+        }
     }
 }

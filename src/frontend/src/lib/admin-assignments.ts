@@ -22,6 +22,8 @@ export type AssignmentResponseDto = {
 export type AssignmentFilterDto = {
   title?: string;
   className?: string;
+  subjectName?: string;
+  subjectCode?: string;
   teacherName?: string;
   teacherEmail?: string;
   status?: string;
@@ -171,6 +173,16 @@ export async function getAssignments(
       filtered = filtered.filter((a) => a.className.toLowerCase().includes(classVal));
     }
 
+    if (filter.subjectName && filter.subjectName.trim() !== "") {
+      const sbjVal = filter.subjectName.trim().toLowerCase();
+      filtered = filtered.filter((a) => a.subjectName.toLowerCase().includes(sbjVal));
+    }
+
+    if (filter.subjectCode && filter.subjectCode.trim() !== "") {
+      const codeVal = filter.subjectCode.trim().toLowerCase();
+      filtered = filtered.filter((a) => a.subjectCode.toLowerCase().includes(codeVal));
+    }
+
     if (filter.teacherName && filter.teacherName.trim() !== "") {
       const teacherVal = filter.teacherName.trim().toLowerCase();
       filtered = filtered.filter((a) => a.teacherName.toLowerCase().includes(teacherVal));
@@ -206,6 +218,8 @@ export async function getAssignments(
   const query = new URLSearchParams();
   if (filter.title) query.set("title", filter.title);
   if (filter.className) query.set("className", filter.className);
+  if (filter.subjectName) query.set("subjectName", filter.subjectName);
+  if (filter.subjectCode) query.set("subjectCode", filter.subjectCode);
   if (filter.teacherName) query.set("teacherName", filter.teacherName);
   if (filter.teacherEmail) query.set("teacherEmail", filter.teacherEmail);
   if (filter.status) query.set("status", filter.status);

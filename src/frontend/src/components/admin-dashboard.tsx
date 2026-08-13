@@ -202,7 +202,7 @@ export function DashboardSummary() {
             <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/assignments">
               Assignments
             </Link>
-            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="#submissions">
+            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/submissions">
               Submissions
             </Link>
           </nav>
