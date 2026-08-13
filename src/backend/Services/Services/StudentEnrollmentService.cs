@@ -25,6 +25,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
     {
         var enrollment = new StudentEnrollment
         {
+            Id = Guid.NewGuid(),
             StudentId = dto.StudentId,
             ClassId = dto.ClassId,
             EnrolledAt = DateTime.UtcNow

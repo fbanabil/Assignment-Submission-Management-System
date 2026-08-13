@@ -21,10 +21,19 @@ public class ClassSubjectService : IClassSubjectService
     public async Task<ClassSubject?> GetClassSubjectByIdAsync(Guid id) =>
         await _context.ClassSubjects.FindAsync(id);
 
+
+
+
+    /// <summary>
+    /// This method creates a new ClassSubject entity based on the provided ClassSubjectCreateDto and saves it to the database.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing the class and subject IDs.</param>
+    /// <returns>The created ClassSubject entity.</returns>
     public async Task<ClassSubject> CreateClassSubjectAsync(ClassSubjectCreateDto dto)
     {
         var classSubject = new ClassSubject
         {
+            Id = Guid.NewGuid(),
             ClassId = dto.ClassId,
             SubjectId = dto.SubjectId
         };
@@ -33,6 +42,10 @@ public class ClassSubjectService : IClassSubjectService
         await _context.SaveChangesAsync();
         return classSubject;
     }
+
+
+
+
 
     public async Task DeleteClassSubjectAsync(Guid id)
     {

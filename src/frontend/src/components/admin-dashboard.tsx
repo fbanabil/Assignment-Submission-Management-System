@@ -193,7 +193,13 @@ export function DashboardSummary() {
             <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/classes">
               Class Management
             </Link>
-            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="#assignments">
+            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/subjects">
+              Subject Management
+            </Link>
+            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/teacher-assignments">
+              Teacher Assignments
+            </Link>
+            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/assignments">
               Assignments
             </Link>
             <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="#submissions">

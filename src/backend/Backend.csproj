@@ -34,6 +34,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Handlers\Admin\" />
+    <Folder Include="Handlers\Student\" />
+    <Folder Include="Handlers\Teacher\" />
     <Folder Include="wwwroot\" />
     <Folder Include="Tests\" />
   </ItemGroup>
