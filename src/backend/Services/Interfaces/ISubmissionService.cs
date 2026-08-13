@@ -15,4 +15,5 @@ public interface ISubmissionService
     Task GradeSubmissionAsync(GradeDto dto, Guid graderId);
     Task<SubmissionSummaryDto> GetSubmissionSummaryAsync();
     Task<PagedResultDto<SubmissionResponseDto>> GetSubmissionsAsync(SubmissionFilterDto filterDto);
+    Task<int> GetUngradedSubmissionsCount(Guid teacherId);
 }

@@ -172,4 +172,19 @@ public class SubmissionService : ISubmissionService
             PageSize = filterDto.PageSize
         };
     }
+
+
+
+    /// <summary>
+    /// This method retrieves the count of ungraded submissions for a specific teacher, based on the teacher's ID. It counts the number of submissions that are associated with assignments created by the specified teacher and have a status of "Submitted".
+    /// </summary>
+    /// <param name="teacherId">The ID of the teacher.</param>
+    /// <returns>The count of ungraded submissions for the specified teacher.</returns>
+    public async Task<int> GetUngradedSubmissionsCount(Guid teacherId)
+    {
+        return await _context.Submissions
+            .Include(s => s.Assignment)
+            .Where(s => s.Assignment.TeacherId == teacherId && s.Status == SubmissionStatus.Submitted)
+            .CountAsync();
+    }
 }

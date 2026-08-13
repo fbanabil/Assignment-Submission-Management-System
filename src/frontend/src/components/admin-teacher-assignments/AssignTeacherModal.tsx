@@ -83,7 +83,9 @@ export function AssignTeacherModal({ isOpen, onClose, onSuccess }: AssignTeacher
 
     const dto: TeacherAssignmentCreateDto = {
       teacherId: selectedTeacherId,
-      classSubjectId: `cs-${selectedClassId}-${selectedSubjectId}`, // ClassSubject mapping ID
+      classSubjectId: "00000000-0000-0000-0000-000000000000",
+      classId: selectedClassId,
+      subjectId: selectedSubjectId,
     };
 
     try {

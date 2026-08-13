@@ -3,6 +3,7 @@ namespace AssignmentSystem.Api.Services.Interfaces;
 using AssignmentSystem.Api.Models.Entities;
 using Backend.DTOs;
 using Backend.DTOs.UserDTOs;
+using System.Security.Claims;
 
 public interface IUserService
 {
@@ -18,4 +19,6 @@ public interface IUserService
     Task InvalidateRefreshTokenAndJwtToken(string jwtToken, string refreshTokenFromCookie);
     Task<UserSummaryDto> GetUserSummaryAsync();
     Task<PagedResultDto<UserResponseDto>> GetUsersAsync(UserFilterDto filterDto);
+    Task<(string TeacherName, string TeacherEmail, Guid TeacherId)> GetTeacherNameAndEmail(ClaimsPrincipal user, Guid? id);
+    Task<(Guid UserId, Guid Email, List<string> Roles)> GetUserIdAndEmailFromClaims(ClaimsPrincipal user);
 }

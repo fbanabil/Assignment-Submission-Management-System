@@ -2,6 +2,7 @@ namespace AssignmentSystem.Api.Services.Services;
 
 using AssignmentSystem.Api.Data;
 using AssignmentSystem.Api.Models.Entities;
+using AssignmentSystem.Api.Models.Enums;
 using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs;
 using Backend.DTOs.UserDTOs;
@@ -412,5 +413,63 @@ public class UserService : IUserService
                 .ToListAsync()
         };
         return result;
+    }
+
+
+
+
+    /// <summary>
+    /// This method retrieves the name and email of a teacher based on the provided user and optional ID. It first checks if the user is authorized to access the teacher's information by comparing the user ID claim with the provided ID. If the user is not authorized, it throws an UnauthorizedAccessException. If the teacher is found in the database, it returns a tuple containing the teacher's name and email; otherwise, it throws a KeyNotFoundException.
+    /// </summary>
+    /// <param name="user">A ClaimsPrincipal representing the currently authenticated user.</param>
+    /// <param name="id">An optional GUID representing the teacher's ID.</param>
+    /// <returns>A tuple containing the teacher's name and email.</returns>
+    /// <exception cref="UnauthorizedAccessException">Thrown when the user is not authorized to access the teacher's information.</exception>
+    /// <exception cref="KeyNotFoundException">Thrown when the teacher is not found in the database.</exception>
+    public async Task<(string TeacherName, string TeacherEmail, Guid TeacherId)> GetTeacherNameAndEmail(ClaimsPrincipal user, Guid? id)
+    {
+        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID claim not found.");
+        var userRoles = _contextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>();
+        
+        if(userIdClaim != null && id.HasValue && id.Value != Guid.Empty && id.ToString() != userIdClaim.Value)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to access this teacher's information.");
+        }
+
+        Guid teacherId = Guid.Parse(userIdClaim!.Value);
+
+        var teacher = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId && u.Role == UserRole.Teacher);
+        if (teacher == null)
+        {
+            throw new KeyNotFoundException("Teacher not found.");
+        }
+
+        return (teacher.FullName, teacher.Email, teacherId);
+    }
+
+
+
+
+
+    /// <summary>
+    /// This method retrieves the user ID, email, and roles from the claims of the provided ClaimsPrincipal. It extracts the user ID and email claims, and collects all role claims into a list. If any of the required claims are missing, it throws an UnauthorizedAccessException. The method returns a tuple containing the user ID, email, and a list of roles.
+    /// </summary>
+    /// <param name="user">A ClaimsPrincipal representing the currently authenticated user.</param>
+    /// <returns>A tuple containing the user ID, email, and a list of roles.</returns>
+    /// <exception cref="UnauthorizedAccessException">Thrown when any of the required claims are missing.</exception>
+    public async Task<(Guid UserId, Guid Email, List<string> Roles)> GetUserIdAndEmailFromClaims(ClaimsPrincipal user)
+    {
+        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID claim not found.");
+        var userRoles = _contextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>();
+        var userEmailClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email) ?? throw new UnauthorizedAccessException("User email claim not found.");
+
+        if (userIdClaim == null)
+        {
+            throw new UnauthorizedAccessException("User ID claim not found.");
+        }
+
+        Guid userId = Guid.Parse(userIdClaim.Value);
+
+        return (userId, Guid.Parse(userEmailClaim.Value), userRoles);
     }
 }

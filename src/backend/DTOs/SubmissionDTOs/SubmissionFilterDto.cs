@@ -1,7 +1,10 @@
 namespace Backend.DTOs.SubmissionDTOs;
 
+using System;
+
 public class SubmissionFilterDto
 {
+    public Guid? AssignmentId { get; set; }
     public string? ClassName { get; set; }
     public string? SubjectName { get; set; }
     public string? SubjectCode { get; set; }

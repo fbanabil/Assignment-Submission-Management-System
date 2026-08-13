@@ -15,6 +15,7 @@ namespace Backend.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly DashboardHandler _dashboardHandler;
@@ -54,7 +55,6 @@ namespace Backend.Controllers
         /// </summary>
         /// <returns>A DashboardSummaryDto containing the summary statistics.</returns>
         [HttpGet("summary")]
-        [AllowAnonymous]
         public async Task<IActionResult> Dashboard()
             => await _dashboardHandler.HandleDashboardAsync();
 
@@ -66,7 +66,6 @@ namespace Backend.Controllers
         /// <param name="filterDto">The filter criteria for retrieving users.</param>
         /// <returns>A PagedResultDto containing the filtered user data and pagination information.</returns>
         [HttpGet]
-        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Users([FromQuery] UserFilterDto filterDto)
             => await _userHandler.HandleGetUsersAsync(filterDto);
 

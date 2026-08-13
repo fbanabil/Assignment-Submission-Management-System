@@ -145,9 +145,9 @@ export function LinkSubjectClassModal({
 
           {currentLinked.length > 0 ? (
             <div className="max-h-44 overflow-y-auto space-y-2 pr-1">
-              {currentLinked.map((cls) => (
+              {currentLinked.map((cls, idx) => (
                 <div
-                  key={cls.id}
+                  key={`${cls.id}-${idx}`}
                   className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-sm"
                 >
                   <div>

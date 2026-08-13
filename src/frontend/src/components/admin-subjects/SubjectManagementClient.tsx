@@ -314,9 +314,8 @@ export function SubjectManagementClient() {
 
         {/* Error banner */}
         {error && (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50/90 p-5 shadow-sm text-rose-700">
-            <h3 className="font-semibold text-rose-800">Error loading subjects</h3>
-            <p className="text-sm mt-1">{error}</p>
+          <div className="rounded-3xl border border-rose-200 bg-rose-50/90 p-4 shadow-sm text-rose-700">
+            <p className="text-sm font-semibold">{error}</p>
           </div>
         )}
 
@@ -379,9 +378,9 @@ export function SubjectManagementClient() {
                         <td className="border-b border-black/5 px-4 py-4">
                           <div className="flex flex-wrap items-center gap-1.5 max-w-md">
                             {sbj.linkedClasses && sbj.linkedClasses.length > 0 ? (
-                              sbj.linkedClasses.map((cls) => (
+                              sbj.linkedClasses.map((cls, idx) => (
                                 <span
-                                  key={cls.id}
+                                  key={`${sbj.id}-${cls.id}-${idx}`}
                                   className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700 shadow-2xs"
                                 >
                                   <span>{cls.name}</span>

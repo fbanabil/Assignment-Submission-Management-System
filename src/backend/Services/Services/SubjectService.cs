@@ -22,14 +22,9 @@ public class SubjectService : ISubjectService
     public async Task<Subject?> GetSubjectByIdAsync(Guid id) =>
         await _context.Subjects.FindAsync(id);
 
-
-
-
     /// <summary>
-    /// This method creates a new subject in the database based on the provided SubjectCreateDto. It initializes a new Subject entity with the name and code from the DTO, adds it to the database context, and saves the changes asynchronously. The created Subject entity is then returned.
+    /// This method creates a new subject in the database based on the provided SubjectCreateDto.
     /// </summary>
-    /// <param name="dto">The data transfer object containing the subject details.</param>
-    /// <returns>The created Subject entity.</returns>
     public async Task<Subject> CreateSubjectAsync(SubjectCreateDto dto)
     {
         var subject = new Subject
@@ -44,14 +39,9 @@ public class SubjectService : ISubjectService
         return subject;
     }
 
-
-
     /// <summary>
-    /// This method updates an existing subject in the database based on the provided SubjectUpdateDto. It first retrieves the subject by its ID, and if found, updates its name and code with the values from the DTO (if they are not null). Finally, it saves the changes to the database asynchronously.
+    /// This method updates an existing subject in the database based on the provided SubjectUpdateDto.
     /// </summary>
-    /// <param name="id">The ID of the subject to update.</param>
-    /// <param name="dto">The data transfer object containing the updated subject details.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateSubjectAsync(Guid id, SubjectUpdateDto dto)
     {
         var subject = await _context.Subjects.FindAsync(id);
@@ -63,13 +53,9 @@ public class SubjectService : ISubjectService
         await _context.SaveChangesAsync();
     }
 
-
-
     /// <summary>
-    /// This method deletes a subject from the database based on the provided subject ID. It first retrieves the subject by its ID, and if found, removes it from the database context and saves the changes asynchronously.
+    /// This method deletes a subject from the database based on the provided subject ID.
     /// </summary>
-    /// <param name="id">The ID of the subject to delete.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DeleteSubjectAsync(Guid id)
     {
         var subject = await _context.Subjects.FindAsync(id);
@@ -80,22 +66,26 @@ public class SubjectService : ISubjectService
         }
     }
 
-
-
-
     /// <summary>
-    /// This method retrieves a paginated list of subjects based on the provided filter criteria. It allows filtering by subject name and code, and supports pagination through page number and page size parameters.
+    /// This method retrieves a paginated list of subjects with their linked classes populated from ClassSubjects.
     /// </summary>
-    /// <param name="filterDto">The filter criteria for retrieving subjects.</param>
-    /// <returns>A PagedResultDto containing the filtered subject data and pagination information.</returns>
     public async Task<PagedResultDto<SubjectResponseDto>> GetSubjectsAsync(SubjectFilterDto filterDto)
     {
         var query = _context.Subjects.AsQueryable();
+
         if (!string.IsNullOrEmpty(filterDto.Name))
             query = query.Where(s => EF.Functions.ILike(s.Name, $"%{filterDto.Name}%"));
+
         if (!string.IsNullOrEmpty(filterDto.Code))
             query = query.Where(s => EF.Functions.ILike(s.Code, $"%{filterDto.Code}%"));
+
+        if (filterDto.ClassId.HasValue && filterDto.ClassId.Value != Guid.Empty)
+        {
+            query = query.Where(s => _context.ClassSubjects.Any(cs => cs.SubjectId == s.Id && cs.ClassId == filterDto.ClassId.Value));
+        }
+
         var totalCount = await query.CountAsync();
+
         var subjects = await query
             .Skip((filterDto.PageNumber - 1) * filterDto.PageSize)
             .Take(filterDto.PageSize)
@@ -103,9 +93,20 @@ public class SubjectService : ISubjectService
             {
                 Id = s.Id,
                 Name = s.Name,
-                Code = s.Code
+                Code = s.Code,
+                LinkedClasses = _context.ClassSubjects
+                    .Where(cs => cs.SubjectId == s.Id)
+                    .Select(cs => new ClassSummaryDto
+                    {
+                        Id = cs.Class.Id,
+                        Name = cs.Class.Name,
+                        Section = cs.Class.Section,
+                        AcademicYear = cs.Class.AcademicYear
+                    })
+                    .ToList()
             })
             .ToListAsync();
+
         return new PagedResultDto<SubjectResponseDto>
         {
             Items = subjects,

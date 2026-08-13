@@ -28,7 +28,7 @@ namespace Backend.Controllers
         /// <param name="dto">The UserCreateDto object containing the user's details.</param>
         /// <returns>An IActionResult representing the result of the create user operation.</returns>
         [HttpPost("/api/admin/users")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser([FromBody] UserCreateDto dto)
             => await _userAuthHandler.HandleCreateUserAsync(dto);
 
@@ -78,7 +78,7 @@ namespace Backend.Controllers
         /// <param name="userUpdateDto">The UserUpdateDto containing the updated user details.</param>
         /// <returns>An IActionResult representing the result of the update operation.</returns>
         [HttpPut("/api/Admin/Users/{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser([FromBody] UserUpdateDto userUpdateDto, [FromRoute] Guid id)
             => await _userAuthHandler.HandleUpdateUserAsync(userUpdateDto, id);
 

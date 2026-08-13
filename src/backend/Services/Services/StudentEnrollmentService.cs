@@ -4,6 +4,7 @@ using AssignmentSystem.Api.Data;
 using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.StudentEnrollmentDTOs;
+using Backend.Middlewares;
 using Microsoft.EntityFrameworkCore;
 
 public class StudentEnrollmentService : IStudentEnrollmentService
@@ -23,6 +24,17 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
     public async Task<StudentEnrollment> CreateStudentEnrollmentAsync(StudentEnrollmentCreateDto dto)
     {
+        // Check if the student is already enrolled in the class
+
+        var existingEnrollment = await _context.StudentEnrollments
+            .FirstOrDefaultAsync(se => se.StudentId == dto.StudentId && se.ClassId == dto.ClassId);
+
+        if (existingEnrollment != null)
+        {
+            throw new BadRequestException("The student is already enrolled in this class.");
+        }
+
+
         var enrollment = new StudentEnrollment
         {
             Id = Guid.NewGuid(),

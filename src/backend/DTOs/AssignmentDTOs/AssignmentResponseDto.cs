@@ -1,3 +1,5 @@
+using AssignmentSystem.Api.Models.Entities;
+
 namespace Backend.DTOs.AssignmentDTOs;
 
 public class AssignmentResponseDto
@@ -18,4 +20,10 @@ public class AssignmentResponseDto
     public string Status { get; set; } = "Active";
     public int TotalSubmissions { get; set; }
     public bool AllowLateSubmission { get; set; }
+    public bool AllowResubmission { get; set; }
+
+    public static implicit operator AssignmentResponseDto(Assignment v)
+    {
+        throw new NotImplementedException();
+    }
 }

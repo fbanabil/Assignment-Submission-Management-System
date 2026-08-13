@@ -124,6 +124,8 @@ namespace Backend.Data
             {
                 entity.HasKey(e => e.Id);
 
+                entity.HasIndex(e => new { e.ClassId, e.SubjectId }).IsUnique();
+
                 entity.HasOne(e => e.Class)
                     .WithMany(c => c.ClassSubjects)
                     .HasForeignKey(e => e.ClassId)
@@ -145,6 +147,8 @@ namespace Backend.Data
             {
                 entity.HasKey(e => e.Id);
 
+                entity.HasIndex(e => new { e.TeacherId, e.ClassSubjectId }).IsUnique();
+
                 entity.HasOne(e => e.Teacher)
                     .WithMany(u => u.TeacherAssignments)
                     .HasForeignKey(e => e.TeacherId)
@@ -160,7 +164,7 @@ namespace Backend.Data
             modelBuilder.Entity<StudentEnrollment>(entity =>
             {
                 entity.HasKey(e => e.Id);
-
+                entity.HasIndex(e => new { e.StudentId, e.ClassId }).IsUnique();
                 entity.HasOne(e => e.Student)
                     .WithMany(u => u.StudentEnrollments)
                     .HasForeignKey(e => e.StudentId)

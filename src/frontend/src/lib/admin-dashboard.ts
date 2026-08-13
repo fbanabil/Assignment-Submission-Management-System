@@ -1,4 +1,4 @@
-import { getApiUrl, parseApiResponseError } from "./api-error";
+import { authenticatedFetch, parseApiResponseError, safeParseJson } from "./api-error";
 
 export type DataSource = string;
 
@@ -58,60 +58,34 @@ export type DashboardApiResponse = {
   submissions: SubmissionSummaryDto;
 };
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-
-const demoUsers: UserSummaryDto = {
-  totalUsers: 248,
-  activeUsers: 221,
-  inactiveUsers: 27,
-  newUsersThisMonth: 16,
-  roleBreakdown: [
-    { role: "Admin", count: 4 },
-    { role: "Teacher", count: 31 },
-    { role: "Student", count: 213 },
-  ],
-};
-
-const demoAssignments: AssignmentSummaryDto = {
-  totalAssignments: 86,
-  activeAssignments: 37,
-  draftAssignments: 11,
-  dueSoonAssignments: 9,
-  completionRate: 68,
-  statusBreakdown: [
-    { status: "Draft", count: 11 },
-    { status: "Published", count: 52 },
-    { status: "Archived", count: 23 },
-  ],
-};
-
-const demoSubmissions: SubmissionSummaryDto = {
-  totalSubmissions: 1482,
-  submittedToday: 74,
-  pendingReview: 38,
-  gradedSubmissions: 1241,
-  weeklyVolumes: [
-    { label: "Mon", count: 52 },
-    { label: "Tue", count: 68 },
-    { label: "Wed", count: 61 },
-    { label: "Thu", count: 84 },
-    { label: "Fri", count: 93 },
-    { label: "Sat", count: 47 },
-    { label: "Sun", count: 55 },
-  ],
-};
-
-const demoDashboardData: DashboardApiResponse = {
-  dataSource: "demo",
+const emptyDashboardData: DashboardApiResponse = {
+  dataSource: "Server API",
   fetchedAt: new Date().toISOString(),
-  users: demoUsers,
-  assignments: demoAssignments,
-  submissions: demoSubmissions,
+  users: {
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    newUsersThisMonth: 0,
+    roleBreakdown: [],
+  },
+  assignments: {
+    totalAssignments: 0,
+    activeAssignments: 0,
+    draftAssignments: 0,
+    dueSoonAssignments: 0,
+    completionRate: 0,
+    statusBreakdown: [],
+  },
+  submissions: {
+    totalSubmissions: 0,
+    submittedToday: 0,
+    pendingReview: 0,
+    gradedSubmissions: 0,
+    weeklyVolumes: [],
+  },
 };
 
-class DashboardRequestError extends Error {
+export class DashboardRequestError extends Error {
   constructor(
     public readonly status: number,
     message: string,
@@ -121,45 +95,29 @@ class DashboardRequestError extends Error {
   }
 }
 
-async function requestJson<T>(path: string, fallback: T): Promise<T> {
-  if (!apiBaseUrl) {
-    return fallback;
-  }
-
-  const url = getApiUrl(path);
-
+export async function getDashboardSummarySnapshot(): Promise<DashboardSummaryDto> {
   try {
-    const response = await fetch(url, {
-      cache: "no-store",
-    });
-
+    const response = await authenticatedFetch("/Admin/Dashboard/summary", { cache: "no-store" });
     if (!response.ok) {
+      if (response.status === 404 || response.status === 415) {
+        return { ...emptyDashboardData, fetchedAt: new Date().toISOString() };
+      }
       const errMessage = await parseApiResponseError(response);
       throw new DashboardRequestError(response.status, errMessage);
     }
 
-    return (await response.json()) as T;
+    const data = await safeParseJson<DashboardApiResponse>(response, emptyDashboardData);
+    return {
+      dataSource: data.dataSource,
+      fetchedAt: data.fetchedAt,
+      users: data.users,
+      assignments: data.assignments,
+      submissions: data.submissions,
+    };
   } catch (error) {
     if (error instanceof DashboardRequestError) {
       throw error;
     }
-
-    throw new Error(`Unable to fetch ${path}: ${error instanceof Error ? error.message : String(error)}`);
+    return { ...emptyDashboardData, fetchedAt: new Date().toISOString() };
   }
-}
-
-export async function getDashboardSummarySnapshot(): Promise<DashboardSummaryDto> {
-  if (!apiBaseUrl) {
-    return demoDashboardData;
-  }
-
-  const data = await requestJson<DashboardApiResponse>("/Admin/Dashboard/summary", demoDashboardData);
-
-  return {
-    dataSource: data.dataSource,
-    fetchedAt: data.fetchedAt,
-    users: data.users,
-    assignments: data.assignments,
-    submissions: data.submissions,
-  };
 }

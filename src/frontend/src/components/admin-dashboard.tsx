@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import { getDashboardSummarySnapshot, type DashboardSummaryDto } from "@/lib/admin-dashboard";
+import { logoutUser } from "@/lib/auth";
 
 type StatCardProps = {
   label: string;
@@ -124,13 +125,8 @@ export function DashboardSummary() {
   if (error) {
     return (
       <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-4xl border border-rose-200 bg-white/90 p-8 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-600">Dashboard error</p>
-          <h1 className="text-2xl font-semibold text-foreground">Unable to load admin summary</h1>
-          <p className="text-sm leading-6 text-(--color-muted)">{error}</p>
-          <p className="text-sm leading-6 text-(--color-muted)">
-            Check that <span className="font-semibold text-foreground">NEXT_PUBLIC_API_BASE_URL</span> points to your backend and that the endpoint responds from the browser.
-          </p>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-3xl border border-rose-200 bg-rose-50/90 p-6 shadow-sm text-rose-700">
+          <p className="text-sm font-semibold">{error}</p>
         </div>
       </main>
     );
@@ -205,6 +201,12 @@ export function DashboardSummary() {
             <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/submissions">
               Submissions
             </Link>
+            <button
+              onClick={() => logoutUser()}
+              className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 font-semibold transition hover:bg-rose-600 hover:text-white cursor-pointer"
+            >
+              Logout 🚪
+            </button>
           </nav>
         </header>
 

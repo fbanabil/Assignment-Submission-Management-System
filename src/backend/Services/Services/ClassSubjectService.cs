@@ -21,9 +21,6 @@ public class ClassSubjectService : IClassSubjectService
     public async Task<ClassSubject?> GetClassSubjectByIdAsync(Guid id) =>
         await _context.ClassSubjects.FindAsync(id);
 
-
-
-
     /// <summary>
     /// This method creates a new ClassSubject entity based on the provided ClassSubjectCreateDto and saves it to the database.
     /// </summary>
@@ -31,6 +28,16 @@ public class ClassSubjectService : IClassSubjectService
     /// <returns>The created ClassSubject entity.</returns>
     public async Task<ClassSubject> CreateClassSubjectAsync(ClassSubjectCreateDto dto)
     {
+        // Check if the ClassSubject already exists to prevent duplicates
+        var existingClassSubject = await _context.ClassSubjects
+            .FirstOrDefaultAsync(cs => cs.ClassId == dto.ClassId && cs.SubjectId == dto.SubjectId);
+
+        if (existingClassSubject != null)
+        {
+            throw new InvalidOperationException("This ClassSubject already exists.");
+        }
+
+
         var classSubject = new ClassSubject
         {
             Id = Guid.NewGuid(),
@@ -43,15 +50,24 @@ public class ClassSubjectService : IClassSubjectService
         return classSubject;
     }
 
-
-
-
-
+    /// <summary>
+    /// This method deletes a ClassSubject entity from the database after removing dependent TeacherAssignments to prevent foreign key constraints.
+    /// </summary>
+    /// <param name="id">The ID of the ClassSubject to delete.</param>
     public async Task DeleteClassSubjectAsync(Guid id)
     {
         var classSubject = await _context.ClassSubjects.FindAsync(id);
         if (classSubject != null)
         {
+            var teacherAssignments = await _context.TeacherAssignments
+                .Where(ta => ta.ClassSubjectId == id)
+                .ToListAsync();
+
+            if (teacherAssignments.Any())
+            {
+                _context.TeacherAssignments.RemoveRange(teacherAssignments);
+            }
+
             _context.ClassSubjects.Remove(classSubject);
             await _context.SaveChangesAsync();
         }

@@ -245,9 +245,8 @@ export function AllSubmissionsManagementClient() {
 
         {/* Error banner */}
         {error && (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50/90 p-5 shadow-sm text-rose-700">
-            <h3 className="font-semibold text-rose-800">Error loading submissions</h3>
-            <p className="text-sm mt-1">{error}</p>
+          <div className="rounded-3xl border border-rose-200 bg-rose-50/90 p-4 shadow-sm text-rose-700">
+            <p className="text-sm font-semibold">{error}</p>
           </div>
         )}
 

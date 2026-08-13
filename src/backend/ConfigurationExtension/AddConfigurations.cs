@@ -21,6 +21,7 @@ public static class AddConfigurations
         services.AddControllers()
             .AddJsonOptions(options =>
             {
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
                 options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
         services.AddEndpointsApiExplorer();
@@ -49,14 +50,15 @@ public static class AddConfigurations
 
 
 
-        // Add CORS
+        // Add CORS configured for credentials (AllowCredentials requires explicit origin echo instead of wildcard *)
         services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", builder =>
             {
-                builder.AllowAnyOrigin()
+                builder.SetIsOriginAllowed(origin => true)
                        .AllowAnyMethod()
-                       .AllowAnyHeader();
+                       .AllowAnyHeader()
+                       .AllowCredentials();
             });
         });
 
