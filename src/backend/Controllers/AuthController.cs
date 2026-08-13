@@ -1,6 +1,5 @@
-﻿using AssignmentSystem.Api.Models.Entities;
-using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.UserDTOs;
+using Backend.Handlers.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,18 +10,13 @@ namespace Backend.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly ILogger<AdminController> _logger;
-        private readonly IConfiguration _configuration;
-        private readonly IUserService _userService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly AuthHandler _authHandler;
+        private readonly UserAuthHandler _userAuthHandler;
 
-
-        public AuthController(ILogger<AdminController> logger, IConfiguration configuration, IUserService userService, IHttpContextAccessor httpContextAccessor)
+        public AuthController(AuthHandler authHandler, UserAuthHandler userAuthHandler)
         {
-            _logger = logger;
-            _configuration = configuration;
-            _userService = userService;
-            _httpContextAccessor = httpContextAccessor;
+            _authHandler = authHandler;
+            _userAuthHandler = userAuthHandler;
         }
 
 
@@ -36,12 +30,7 @@ namespace Backend.Controllers
         [HttpPost("/api/admin/users")]
         //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser([FromBody] UserCreateDto dto)
-        {
-            var user = await _userService.CreateUserAsync(dto);
-            return StatusCode(StatusCodes.Status201Created, new { user.Id, user.FullName, user.Email, user.Role });
-        }
-
-
+            => await _userAuthHandler.HandleCreateUserAsync(dto);
 
 
 
@@ -54,31 +43,7 @@ namespace Backend.Controllers
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
-        {
-            // Validate the user credentials
-            User? user = await _userService.AuthenticateUserAsync(dto.Email, dto.Password);
-            if (user == null)
-            {
-                return Unauthorized(new { message = "Invalid email or password." });
-            }
-
-
-            // Generate JWT token and refresh token
-            string token = await _userService.GenerateJwtToken(user);
-            string refreshToken = await _userService.GenerateRefreshToken(user);
-
-            // Set refreshToken as HttpOnly cookie
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = DateTime.UtcNow.AddDays(7),
-                SameSite = SameSiteMode.Strict,
-                Secure = true // Set to true in production for HTTPS
-            };
-
-            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
-            return Ok(new { token });
-        }
+            => await _authHandler.HandleLoginAsync(dto);
 
 
 
@@ -90,37 +55,7 @@ namespace Backend.Controllers
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> RefreshToken()
-        {
-            // Check if the refresh token is present in the request cookies
-            if (!Request.Cookies.TryGetValue("refreshToken", out string? refreshToken))
-            {
-                return Unauthorized(new { message = "Refresh token is missing." });
-            }
-
-            // Validate the refresh token and get the associated user
-            User? user = await _userService.GetUserByRefreshTokenAsync(refreshToken);
-            if (user == null)
-            {
-                return Unauthorized(new { message = "Invalid refresh token." });
-            }
-
-            // Generate a new JWT token and refresh token
-            string newToken = await _userService.GenerateJwtToken(user);
-            string newRefreshToken = await _userService.GenerateRefreshToken(user);
-            // Update the refresh token in the database
-            // Set new refreshToken as HttpOnly cookie
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = DateTime.UtcNow.AddDays(7),
-                SameSite = SameSiteMode.Strict,
-                Secure = true // Set to true in production for HTTPS
-            };
-            Response.Cookies.Append("refreshToken", newRefreshToken, cookieOptions);
-            
-            return Ok(new { token = newToken });
-        }
-
+            => await _authHandler.HandleRefreshTokenAsync();
 
 
 
@@ -132,39 +67,7 @@ namespace Backend.Controllers
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Logout()
-        {
-            // Check if the refresh token is present in the request cookies
-            if (!Request.Cookies.TryGetValue("refreshToken", out string? refreshToken))
-            {
-                return Unauthorized(new { message = "Refresh token is missing." });
-            }
-
-            // Validate the refresh token and get the associated user
-            User? user = await _userService.GetUserByRefreshTokenAsync(refreshToken);
-            if (user == null)
-            {
-                return Unauthorized(new { message = "Invalid refresh token." });
-            }
-            // Invalidate the refresh token in the database
-            Response.Cookies.Delete("refreshToken");
-
-            // Invalidate the JWT token in the database
-            string? jwtToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-            string? refreshTokenFromCookie = Request.Cookies["refreshToken"];
-
-
-            // Check if the JWT token or refresh token is missing
-            if (string.IsNullOrEmpty(jwtToken) || string.IsNullOrEmpty(refreshTokenFromCookie))
-            {
-                return BadRequest(new { message = "JWT token or refresh token is missing." });
-            }
-
-            // Invalidate the JWT token and refresh token in the database
-            await _userService.InvalidateRefreshTokenAndJwtToken(jwtToken, refreshTokenFromCookie);
-
-            return Ok(new { message = "Logged out successfully." });
-        }
-
+            => await _authHandler.HandleLogoutAsync();
 
 
 
@@ -177,23 +80,8 @@ namespace Backend.Controllers
         [HttpPut("/api/Admin/Users/{id}")]
         //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser([FromBody] UserUpdateDto userUpdateDto, [FromRoute] Guid id)
-        {
-            if(id != userUpdateDto.Id)
-            {
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "User ID in the route does not match the ID in the request body." });
-            }
+            => await _userAuthHandler.HandleUpdateUserAsync(userUpdateDto, id);
 
-            // Check if the user exists
-            var user = await _userService.GetUserByIdAsync(userUpdateDto.Id);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found." });
-            }
-            // Update the user details
-            await _userService.UpdateUserAsync(userUpdateDto.Id, userUpdateDto);
-            return Ok(new { message = "User updated successfully." });
-
-        }
 
 
 
@@ -205,17 +93,6 @@ namespace Backend.Controllers
         [HttpDelete]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(Guid id)
-        {
-            // Check if the user exists
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found." });
-            }
-
-            // Delete the user
-            await _userService.DeleteUserAsync(id);
-            return Ok(new { message = "User deleted successfully." });
-        }
+            => await _userAuthHandler.HandleDeleteUserAsync(id);
     }
 }

@@ -82,6 +82,21 @@ public static class AddConfigurations
         services.AddScoped<IAssignmentService, AssignmentService>();
         services.AddScoped<ISubmissionService, SubmissionService>();
 
+        // Register Handlers
+        services.AddScoped<Backend.Handlers.Admin.DashboardHandler>();
+        services.AddScoped<Backend.Handlers.Admin.UserHandler>();
+        services.AddScoped<Backend.Handlers.Admin.ClassHandler>();
+        services.AddScoped<Backend.Handlers.Admin.SubjectHandler>();
+        services.AddScoped<Backend.Handlers.Admin.ClassSubjectHandler>();
+        services.AddScoped<Backend.Handlers.Admin.TeacherAssignmentHandler>();
+        services.AddScoped<Backend.Handlers.Admin.AssignmentHandler>();
+        services.AddScoped<Backend.Handlers.Admin.SubmissionHandler>();
+        services.AddScoped<Backend.Handlers.Auth.AuthHandler>();
+        services.AddScoped<Backend.Handlers.Auth.UserAuthHandler>();
+
+
+
+
 
 
 
