@@ -190,6 +190,9 @@ export function DashboardSummary() {
             <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/users">
               User Management
             </Link>
+            <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="/admin/classes">
+              Class Management
+            </Link>
             <Link className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2" href="#assignments">
               Assignments
             </Link>

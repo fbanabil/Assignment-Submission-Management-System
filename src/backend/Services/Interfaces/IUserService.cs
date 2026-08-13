@@ -17,4 +17,5 @@ public interface IUserService
     Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
     Task InvalidateRefreshTokenAndJwtToken(string jwtToken, string refreshTokenFromCookie);
     Task<UserSummaryDto> GetUserSummaryAsync();
+    Task<PagedResultDto<UserResponseDto>> GetUsersAsync(UserFilterDto filterDto);
 }

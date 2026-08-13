@@ -323,6 +323,7 @@ public class UserService : IUserService
     /// <returns>A task that represents the asynchronous operation. The task result contains the UserSummaryDto object.</returns>
     public async Task<UserSummaryDto> GetUserSummaryAsync()
     {
+        // Retrieve user statistics and create a UserSummaryDto object
         var userSummary = new UserSummaryDto
         {
             TotalUsers = await _context.Users.CountAsync(),
@@ -339,5 +340,77 @@ public class UserService : IUserService
                 .ToListAsync()
         };
         return userSummary;
+    }
+
+
+
+
+
+    /// <summary>
+    /// This method retrieves a paginated list of users based on the provided filter criteria in the UserFilterDto. It applies various filters such as ID, name, email, phone number, role, and active status to the query. The results are then paginated based on the specified page number and page size. The method returns a PagedResultDto containing the filtered user data along with pagination information.
+    /// </summary>
+    /// <param name="filterDto">The filter criteria for retrieving users.</param>
+    /// <returns>A PagedResultDto containing the filtered user data and pagination information.</returns>
+    public async Task<PagedResultDto<UserResponseDto>> GetUsersAsync(UserFilterDto filterDto)
+    {
+        // Set default values for page number and page size if they are not provided or invalid
+        filterDto.PageNumber = (filterDto.PageNumber <= 0) ? 1 : filterDto.PageNumber;
+        filterDto.PageSize = (filterDto.PageSize <= 0) ? 10 : filterDto.PageSize;
+
+
+        // Create a queryable collection of users from the database
+        var query = _context.Users.AsQueryable();
+
+
+        // Apply filters based on the provided filter criteria in the UserFilterDto
+        if(!string.IsNullOrEmpty(filterDto.Name))
+        {
+            query = query.Where(u => EF.Functions.ILike(u.FullName, $"%{filterDto.Name}%"));
+        }
+
+        if(!string.IsNullOrEmpty(filterDto.Email))
+        {
+            query = query.Where(u => EF.Functions.ILike(u.Email, $"%{filterDto.Email}%"));
+        }
+
+        if(!string.IsNullOrEmpty(filterDto.PhoneNumber))
+        {
+            query = query.Where(u => EF.Functions.ILike(u.PhoneNumber, $"%{filterDto.PhoneNumber}%"));
+        }
+
+        if(filterDto.Role.HasValue)
+        {
+            query = query.Where(u => u.Role == filterDto.Role.Value);
+        }
+
+        if(filterDto.IsActive.HasValue)
+        {
+            query = query.Where(u => u.IsActive == filterDto.IsActive.Value);
+        }
+
+
+
+        // Create a PagedResultDto to hold the paginated results
+        PagedResultDto<UserResponseDto> result = new PagedResultDto<UserResponseDto>
+        {
+            TotalCount = await query.CountAsync(),
+            PageNumber = filterDto.PageNumber,
+            PageSize = filterDto.PageSize,
+            Items = await query
+                .Skip((filterDto.PageNumber - 1) * filterDto.PageSize)
+                .Take(filterDto.PageSize)
+                .Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    Role = u.Role,
+                    IsActive = u.IsActive,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToListAsync()
+        };
+        return result;
     }
 }

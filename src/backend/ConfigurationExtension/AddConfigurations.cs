@@ -1,4 +1,4 @@
-﻿using AssignmentSystem.Api.Data;
+using AssignmentSystem.Api.Data;
 using AssignmentSystem.Api.Services.Interfaces;
 using AssignmentSystem.Api.Services.Services;
 using Backend.Helpers;
@@ -18,7 +18,11 @@ public static class AddConfigurations
 {
     public static void AddServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
         services.AddOpenApi();

@@ -1,3 +1,5 @@
+import { getApiUrl, parseApiResponseError } from "./api-error";
+
 export type DataSource = string;
 
 export type UserRoleSummaryDto = {
@@ -124,26 +126,16 @@ async function requestJson<T>(path: string, fallback: T): Promise<T> {
     return fallback;
   }
 
+  const url = getApiUrl(path);
+
   try {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
+    const response = await fetch(url, {
       cache: "no-store",
     });
 
     if (!response.ok) {
-      const contentType = response.headers.get("content-type") ?? "";
-      let serverMessage = response.statusText;
-
-      if (contentType.includes("application/json")) {
-        const payload = (await response.json()) as { message?: string; error?: string; title?: string };
-        serverMessage = payload.message ?? payload.error ?? payload.title ?? serverMessage;
-      } else {
-        const body = await response.text();
-        if (body.trim()) {
-          serverMessage = body.trim();
-        }
-      }
-
-      throw new DashboardRequestError(response.status, `${response.status} ${serverMessage}`.trim());
+      const errMessage = await parseApiResponseError(response);
+      throw new DashboardRequestError(response.status, errMessage);
     }
 
     return (await response.json()) as T;
@@ -152,7 +144,7 @@ async function requestJson<T>(path: string, fallback: T): Promise<T> {
       throw error;
     }
 
-    throw new Error(`Unable to fetch ${path}`);
+    throw new Error(`Unable to fetch ${path}: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
