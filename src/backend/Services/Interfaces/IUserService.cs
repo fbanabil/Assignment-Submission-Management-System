@@ -20,5 +20,5 @@ public interface IUserService
     Task<UserSummaryDto> GetUserSummaryAsync();
     Task<PagedResultDto<UserResponseDto>> GetUsersAsync(UserFilterDto filterDto);
     Task<(string TeacherName, string TeacherEmail, Guid TeacherId)> GetTeacherNameAndEmail(ClaimsPrincipal user, Guid? id);
-    Task<(Guid UserId, Guid Email, List<string> Roles)> GetUserIdAndEmailFromClaims(ClaimsPrincipal user);
+    Task<(Guid UserId, string Email, List<string> Roles)> GetUserIdAndEmailFromClaims();
 }

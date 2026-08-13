@@ -16,11 +16,13 @@ public class AssignmentService : IAssignmentService
 {
     private readonly AppDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IUserService _userService;
 
-    public AssignmentService(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+    public AssignmentService(AppDbContext context, IHttpContextAccessor httpContextAccessor, IUserService userService)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;
+        _userService = userService;
     }
 
     public async Task<IEnumerable<Assignment>> GetAllAssignmentsAsync() =>
@@ -43,7 +45,7 @@ public class AssignmentService : IAssignmentService
     /// <returns>The created AssignmentResponseDto entity.</returns>
     public async Task<AssignmentResponseDto> CreateAssignmentAsync(AssignmentCreateDto dto)
     {
-        var userClaimId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userClaims = await _userService.GetUserIdAndEmailFromClaims();
         var assignment = new Assignment
         {
             Id = Guid.NewGuid(),
@@ -51,7 +53,7 @@ public class AssignmentService : IAssignmentService
             Description = dto.Description,
             ClassId = dto.ClassId,
             SubjectId = dto.SubjectId,
-            TeacherId = Guid.Parse(userClaimId!),
+            TeacherId = userClaims.UserId,
             Deadline = dto.Deadline,
             MaxMarks = dto.MaxMarks,
             Status = dto.Status,
@@ -81,6 +83,14 @@ public class AssignmentService : IAssignmentService
         var assignment = await _context.Assignments.FindAsync(id);
         if (assignment == null) throw new KeyNotFoundException($"Assignment with ID {id} not found.");
 
+        var userClaims = await _userService.GetUserIdAndEmailFromClaims();
+
+        if(assignment.TeacherId != userClaims.UserId)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to update this assignment.");
+        }
+
+
         if (dto.Title != null) assignment.Title = dto.Title;
         if (dto.Description != null) assignment.Description = dto.Description;
         if (dto.Deadline != null) assignment.Deadline = dto.Deadline.Value;
@@ -107,7 +117,15 @@ public class AssignmentService : IAssignmentService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DeleteAssignmentAsync(Guid id)
     {
+        var userClaims = await _userService.GetUserIdAndEmailFromClaims();
+
         var assignment = await _context.Assignments.FindAsync(id);
+
+        if(assignment != null && assignment.TeacherId != userClaims.UserId)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete this assignment.");
+        }
+
         if (assignment != null)
         {
             _context.Assignments.Remove(assignment);

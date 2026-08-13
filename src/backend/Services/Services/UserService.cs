@@ -457,7 +457,7 @@ public class UserService : IUserService
     /// <param name="user">A ClaimsPrincipal representing the currently authenticated user.</param>
     /// <returns>A tuple containing the user ID, email, and a list of roles.</returns>
     /// <exception cref="UnauthorizedAccessException">Thrown when any of the required claims are missing.</exception>
-    public async Task<(Guid UserId, Guid Email, List<string> Roles)> GetUserIdAndEmailFromClaims(ClaimsPrincipal user)
+    public async Task<(Guid UserId, string Email, List<string> Roles)> GetUserIdAndEmailFromClaims()
     {
         var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID claim not found.");
         var userRoles = _contextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>();
@@ -470,6 +470,6 @@ public class UserService : IUserService
 
         Guid userId = Guid.Parse(userIdClaim.Value);
 
-        return (userId, Guid.Parse(userEmailClaim.Value), userRoles);
+        return (userId, userEmailClaim.Value, userRoles);
     }
 }

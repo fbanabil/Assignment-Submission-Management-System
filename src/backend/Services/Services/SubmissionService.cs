@@ -13,10 +13,12 @@ using Microsoft.EntityFrameworkCore;
 public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
+    private readonly IUserService _userService;
 
-    public SubmissionService(AppDbContext context)
+    public SubmissionService(AppDbContext context, IUserService userService)
     {
         _context = context;
+        _userService = userService;
     }
 
     public async Task<IEnumerable<Submission>> GetAllSubmissionsAsync() =>
@@ -25,8 +27,22 @@ public class SubmissionService : ISubmissionService
     public async Task<Submission?> GetSubmissionByIdAsync(Guid id) =>
         await _context.Submissions.FindAsync(id);
 
+
+
+    /// <summary>
+    /// This method creates a new submission based on the provided SubmissionCreateDto. It initializes a new Submission entity, sets its properties, adds it to the database context, and saves the changes asynchronously.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing the submission details.</param>
+    /// <returns>The created Submission entity.</returns>
     public async Task<Submission> CreateSubmissionAsync(SubmissionCreateDto dto)
     {
+        var userClaims = await _userService.GetUserIdAndEmailFromClaims();
+
+        if(!userClaims.Roles.Contains("Student"))
+        {
+            throw new UnauthorizedAccessException("Only students can create submissions.");
+        }
+
         var submission = new Submission
         {
             AssignmentId = dto.AssignmentId,
@@ -43,10 +59,34 @@ public class SubmissionService : ISubmissionService
         return submission;
     }
 
+
+
+
+    /// <summary>
+    /// This method updates an existing submission based on the provided SubmissionUpdateDto. It retrieves the submission by its ID, updates its properties if they are provided in the DTO, sets the LastUpdatedAt timestamp, and saves the changes asynchronously.
+    /// </summary>
+    /// <param name="id">The ID of the submission to update.</param>
+    /// <param name="dto">The data transfer object containing the updated submission details.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateSubmissionAsync(Guid id, SubmissionUpdateDto dto)
     {
         var submission = await _context.Submissions.FindAsync(id);
         if (submission == null) return;
+
+
+        var userClaims = await _userService.GetUserIdAndEmailFromClaims();
+
+        if(!userClaims.Roles.Contains("Student"))
+        {
+            throw new UnauthorizedAccessException("Only students can update submissions.");
+        }
+
+
+        if(submission.StudentId != userClaims.UserId)
+        {
+            throw new UnauthorizedAccessException("You can only update your own submissions.");
+        }
+
 
         if (dto.SubmissionText != null) submission.SubmissionText = dto.SubmissionText;
         if (dto.FileUrl != null) submission.FileUrl = dto.FileUrl;
@@ -56,14 +96,32 @@ public class SubmissionService : ISubmissionService
         await _context.SaveChangesAsync();
     }
 
+
+
+    /// <summary>
+    /// This method grades a submission based on the provided GradeDto and the ID of the grader (teacher). It retrieves the submission by its ID, checks if the grader is authorized to grade the submission, updates the submission's marks, feedback, graded by, graded at timestamp, and status, and saves the changes asynchronously.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing the grading details.</param>
+    /// <param name="graderId">The ID of the teacher grading the submission.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="UnauthorizedAccessException"></exception>
     public async Task GradeSubmissionAsync(GradeDto dto, Guid graderId)
     {
         var submission = await _context.Submissions.FindAsync(dto.SubmissionId);
         if (submission == null) return;
 
+        var userClaims = await _userService.GetUserIdAndEmailFromClaims();
+
+        if(!userClaims.Roles.Contains("Teacher"))
+        {
+            throw new UnauthorizedAccessException("Only teachers can grade submissions.");
+        }
+
+
+
         submission.Marks = dto.Marks;
         submission.Feedback = dto.Feedback;
-        submission.GradedBy = graderId;
+        submission.GradedBy = userClaims.UserId;
         submission.GradedAt = DateTime.UtcNow;
         submission.Status = SubmissionStatus.Graded;
 
@@ -109,12 +167,15 @@ public class SubmissionService : ISubmissionService
     /// <returns>A paginated list of submissions matching the filter criteria.</returns>
     public async Task<PagedResultDto<SubmissionResponseDto>> GetSubmissionsAsync(SubmissionFilterDto filterDto)
     {
+        var userClaims = await _userService.GetUserIdAndEmailFromClaims();
+
         var query = _context.Submissions
             .Include(s => s.Student)
             .Include(s => s.Assignment)
                 .ThenInclude(a => a.Subject)
             .Include(s => s.Assignment)
                 .ThenInclude(a => a.Class)
+                .Where(s => s.Assignment.TeacherId == userClaims.UserId)
             .AsQueryable();
 
         // Apply filters
@@ -182,6 +243,11 @@ public class SubmissionService : ISubmissionService
     /// <returns>The count of ungraded submissions for the specified teacher.</returns>
     public async Task<int> GetUngradedSubmissionsCount(Guid teacherId)
     {
+        if(teacherId == Guid.Empty)
+        {
+            teacherId = await _userService.GetUserIdAndEmailFromClaims().ContinueWith(t => t.Result.UserId);
+        }
+
         return await _context.Submissions
             .Include(s => s.Assignment)
             .Where(s => s.Assignment.TeacherId == teacherId && s.Status == SubmissionStatus.Submitted)
