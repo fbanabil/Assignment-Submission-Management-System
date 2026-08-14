@@ -221,7 +221,9 @@ Run the full platform (Database, API, Frontend, pgAdmin) in isolated containers 
    cd Assignment-Submission-Management-System
    ```
 2. **Put RSA public and private key in docker-compose.yml files backend environment (Make sure to save the file before later actions)**
-   **Already keys are given to compose-file. Don't use it in another project as they are not safe to use aymore.** 
+
+   **As these keys are not used any other project keys are given to compose-file. Don't use it in another project as they are not safe to use anymore.**
+   **In case of production please follow instructions below.** 
 
    **To generate RSA keys: In terminal**
    ```bash
