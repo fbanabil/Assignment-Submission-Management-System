@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Helpers
 {
@@ -10,11 +11,13 @@ namespace Backend.Helpers
     public class CacheTokenBlacklistRepository : ITokenBlacklistRepository
     {
         private readonly IDistributedCache _cache;
+        private readonly ILogger<CacheTokenBlacklistRepository> _logger;
         private const string Prefix = "blacklist:";
 
-        public CacheTokenBlacklistRepository(IDistributedCache cache)
+        public CacheTokenBlacklistRepository(IDistributedCache cache, ILogger<CacheTokenBlacklistRepository> logger)
         {
             _cache = cache;
+            _logger = logger;
         }
 
 
@@ -26,6 +29,7 @@ namespace Backend.Helpers
         /// <returns>A task that represents the asynchronous operation.</returns>
         public async Task AddToBlacklistAsync(string token, TimeSpan timeToLive)
         {
+            _logger.LogInformation("CacheTokenBlacklistRepository: Adding token to blacklist for TTL:{TTL}", timeToLive);
             var options = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = timeToLive
@@ -33,6 +37,7 @@ namespace Backend.Helpers
 
             // We just store a tiny flag "1" to save memory
             await _cache.SetStringAsync($"{Prefix}{token}", "1", options);
+            _logger.LogInformation("CacheTokenBlacklistRepository: Token added to blacklist successfully");
         }
 
 
@@ -46,7 +51,12 @@ namespace Backend.Helpers
         {
             // We check if the token exists in the cache. If it does, it means the token is blacklisted.
             var result = await _cache.GetStringAsync($"{Prefix}{token}");
-            return !string.IsNullOrEmpty(result);
+            bool isBlacklisted = !string.IsNullOrEmpty(result);
+            if (isBlacklisted)
+            {
+                _logger.LogWarning("CacheTokenBlacklistRepository: Token is blacklisted");
+            }
+            return isBlacklisted;
         }
     }
 }

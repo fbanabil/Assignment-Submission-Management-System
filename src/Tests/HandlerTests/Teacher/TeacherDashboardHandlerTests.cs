@@ -3,6 +3,7 @@ using Backend.DTOs.TeacherDTOs;
 using Backend.Handlers.Teacher;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -31,7 +32,8 @@ namespace Tests.HandlerTests.Teacher
                 _mockAssignmentService.Object,
                 _mockSubmissionService.Object,
                 _mockTeacherAssignmentService.Object,
-                _mockHttpContextAccessor.Object);
+                _mockHttpContextAccessor.Object,
+                Mock.Of<ILogger<TeacherDashboardHandler>>());
         }
 
         [Fact]

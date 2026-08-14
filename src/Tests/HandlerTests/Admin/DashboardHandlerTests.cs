@@ -4,6 +4,7 @@ using Backend.DTOs.SubmissionDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Admin
@@ -24,7 +25,8 @@ namespace Tests.HandlerTests.Admin
             _handler = new DashboardHandler(
                 _mockUserService.Object,
                 _mockAssignmentService.Object,
-                _mockSubmissionService.Object);
+                _mockSubmissionService.Object,
+                Mock.Of<ILogger<DashboardHandler>>());
         }
 
         [Fact]

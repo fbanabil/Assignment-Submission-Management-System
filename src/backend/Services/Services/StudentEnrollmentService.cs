@@ -7,6 +7,7 @@ using Backend.DTOs.StudentEnrollmentDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Middlewares;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 
 using AssignmentSystem.Api.Models.Enums;
@@ -14,23 +15,32 @@ using AssignmentSystem.Api.Models.Enums;
 public class StudentEnrollmentService : IStudentEnrollmentService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<StudentEnrollmentService> _logger;
 
-    public StudentEnrollmentService(AppDbContext context)
+    public StudentEnrollmentService(AppDbContext context, ILogger<StudentEnrollmentService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    public async Task<IEnumerable<StudentEnrollment>> GetAllStudentEnrollmentsAsync() =>
-        await _context.StudentEnrollments.Include(se => se.Student).Include(se => se.Class).ToListAsync();
+    public async Task<IEnumerable<StudentEnrollment>> GetAllStudentEnrollmentsAsync()
+    {
+        _logger.LogInformation("StudentEnrollmentService: Fetching all student enrollments");
+        return await _context.StudentEnrollments.Include(se => se.Student).Include(se => se.Class).ToListAsync();
+    }
 
-    public async Task<StudentEnrollment?> GetStudentEnrollmentByIdAsync(Guid id) =>
-        await _context.StudentEnrollments.FindAsync(id);
+    public async Task<StudentEnrollment?> GetStudentEnrollmentByIdAsync(Guid id)
+    {
+        _logger.LogInformation("StudentEnrollmentService: Fetching enrollment by Id:{Id}", id);
+        return await _context.StudentEnrollments.FindAsync(id);
+    }
 
     /// <summary>
     /// This method creates a new student enrollment record in the database after verifying the student email and role.
     /// </summary>
     public async Task<StudentEnrollment> CreateStudentEnrollmentAsync(StudentEnrollmentCreateDto dto)
     {
+        _logger.LogInformation("StudentEnrollmentService: Creating enrollment for Email:{StudentEmail}, ClassId:{ClassId}", dto.StudentEmail, dto.ClassId);
         // 1. Verify user exists by email (or StudentId fallback)
         User? student = null;
         if (!string.IsNullOrWhiteSpace(dto.StudentEmail))
@@ -45,12 +55,14 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
         if (student == null)
         {
+            _logger.LogWarning("StudentEnrollmentService: Student email '{StudentEmail}' not found", dto.StudentEmail);
             throw new BadRequestException($"No user found with email '{dto.StudentEmail}'.");
         }
 
         // 2. Verify user has the Student role
         if (student.Role != UserRole.Student)
         {
+            _logger.LogWarning("StudentEnrollmentService: User '{StudentEmail}' role is {Role}, not Student", dto.StudentEmail, student.Role);
             throw new BadRequestException($"The user with email '{dto.StudentEmail}' is assigned as a {student.Role}, not a Student. Only students can be enrolled in classes.");
         }
 
@@ -60,6 +72,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
         if (existingEnrollment != null)
         {
+            _logger.LogWarning("StudentEnrollmentService: Student {FullName} already enrolled in ClassId:{ClassId}", student.FullName, dto.ClassId);
             throw new BadRequestException($"Student {student.FullName} ({student.Email}) is already enrolled in this class.");
         }
 
@@ -73,6 +86,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
         _context.StudentEnrollments.Add(enrollment);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("StudentEnrollmentService: Created enrollment Id:{Id}", enrollment.Id);
         return enrollment;
     }
 
@@ -86,11 +100,17 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
     public async Task DeleteStudentEnrollmentAsync(Guid id)
     {
+        _logger.LogInformation("StudentEnrollmentService: Deleting enrollment Id:{Id}", id);
         var enrollment = await _context.StudentEnrollments.FindAsync(id);
         if (enrollment != null)
         {
             _context.StudentEnrollments.Remove(enrollment);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("StudentEnrollmentService: Deleted enrollment Id:{Id}", id);
+        }
+        else
+        {
+            _logger.LogWarning("StudentEnrollmentService: Enrollment Id:{Id} not found for deletion", id);
         }
     }
 
@@ -104,6 +124,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
     /// <returns>A list of class IDs that the student is enrolled in.</returns>
     public async Task<List<Guid>> GetEnrolledClassIdsAsync(Guid targetStudentId)
     {
+        _logger.LogInformation("StudentEnrollmentService: Fetching enrolled class IDs for StudentId:{StudentId}", targetStudentId);
         return await _context.StudentEnrollments
                 .Where(e => e.StudentId == targetStudentId)
                 .Select(e => e.ClassId)
@@ -112,6 +133,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
     public async Task<PagedResultDto<StudentEnrollmentResponseDto>> GetStudentEnrollmentsAsync(StudentEnrollmentFilterDto filterDto)
     {
+        _logger.LogInformation("StudentEnrollmentService: Querying student enrollments");
         var query = _context.StudentEnrollments
             .Include(se => se.Student)
             .Include(se => se.Class)
@@ -170,6 +192,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
             })
             .ToListAsync();
 
+        _logger.LogInformation("StudentEnrollmentService: Retrieved {Count} enrollments matching filter", totalCount);
         return new PagedResultDto<StudentEnrollmentResponseDto>
         {
             Items = items,
@@ -181,6 +204,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
     public async Task<PagedResultDto<StudentEnrollmentResponseDto>> GetStudentEnrollmentsForTeacherAsync(Guid teacherId, StudentEnrollmentFilterDto filterDto)
     {
+        _logger.LogInformation("StudentEnrollmentService: Querying enrollments for TeacherId:{TeacherId}", teacherId);
         // Get class IDs assigned to the teacher via TeacherAssignments
         var teacherClassIds = await _context.TeacherAssignments
             .Include(ta => ta.ClassSubject)
@@ -247,6 +271,8 @@ public class StudentEnrollmentService : IStudentEnrollmentService
                 EnrolledAt = se.EnrolledAt
             })
             .ToListAsync();
+
+        _logger.LogInformation("StudentEnrollmentService: Retrieved {Count} enrollments for TeacherId:{TeacherId}", totalCount2, teacherId);
 
         return new PagedResultDto<StudentEnrollmentResponseDto>
         {

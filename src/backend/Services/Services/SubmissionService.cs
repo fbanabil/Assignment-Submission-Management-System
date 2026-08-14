@@ -12,6 +12,7 @@ using Backend.DTOs.UserDTOs;
 using Backend.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.IO;
 
@@ -22,12 +23,14 @@ public class SubmissionService : ISubmissionService
     private readonly AppDbContext _context;
     private readonly IUserService _userService;
     private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<SubmissionService> _logger;
 
-    public SubmissionService(AppDbContext context, IUserService userService, IWebHostEnvironment environment)
+    public SubmissionService(AppDbContext context, IUserService userService, IWebHostEnvironment environment, ILogger<SubmissionService> logger)
     {
         _context = context;
         _userService = userService;
         _environment = environment;
+        _logger = logger;
     }
 
     private void DeletePhysicalFileFromWebRoot(string? fileUrl)
@@ -47,19 +50,26 @@ public class SubmissionService : ISubmissionService
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);
+                _logger.LogInformation("SubmissionService: Deleted physical file at {Path}", fullPath);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore file deletion error silently
+            _logger.LogWarning(ex, "SubmissionService: Failed to delete physical file {FileUrl}", fileUrl);
         }
     }
 
-    public async Task<IEnumerable<Submission>> GetAllSubmissionsAsync() =>
-        await _context.Submissions.Include(s => s.Student).Include(s => s.Assignment).ToListAsync();
+    public async Task<IEnumerable<Submission>> GetAllSubmissionsAsync()
+    {
+        _logger.LogInformation("SubmissionService: Fetching all submissions");
+        return await _context.Submissions.Include(s => s.Student).Include(s => s.Assignment).ToListAsync();
+    }
 
-    public async Task<Submission?> GetSubmissionByIdAsync(Guid id) =>
-        await _context.Submissions.FindAsync(id);
+    public async Task<Submission?> GetSubmissionByIdAsync(Guid id)
+    {
+        _logger.LogInformation("SubmissionService: Fetching submission by Id:{Id}", id);
+        return await _context.Submissions.FindAsync(id);
+    }
 
 
 
@@ -70,10 +80,12 @@ public class SubmissionService : ISubmissionService
     /// <returns>The created Submission entity.</returns>
     public async Task<Submission> CreateSubmissionAsync(SubmissionCreateDto dto)
     {
+        _logger.LogInformation("SubmissionService: Creating submission for AssignmentId:{AssignmentId}, StudentId:{StudentId}", dto.AssignmentId, dto.StudentId);
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
 
         if(!userClaims.Roles.Contains("Student"))
         {
+            _logger.LogWarning("SubmissionService: Non-student user attempting to submit work");
             throw new ForbiddenException("Only students can create submissions.");
         }
 
@@ -90,6 +102,7 @@ public class SubmissionService : ISubmissionService
 
         _context.Submissions.Add(submission);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("SubmissionService: Created submission Id:{Id}", submission.Id);
         return submission;
     }
 
@@ -104,20 +117,27 @@ public class SubmissionService : ISubmissionService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateSubmissionAsync(Guid id, SubmissionUpdateDto dto)
     {
+        _logger.LogInformation("SubmissionService: Updating submission Id:{Id}", id);
         var submission = await _context.Submissions.FindAsync(id);
-        if (submission == null) return;
+        if (submission == null)
+        {
+            _logger.LogWarning("SubmissionService: Submission Id:{Id} not found for update", id);
+            return;
+        }
 
 
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
 
         if(!userClaims.Roles.Contains("Student"))
         {
+            _logger.LogWarning("SubmissionService: Non-student user attempting to update submission");
             throw new ForbiddenException("Only students can update submissions.");
         }
 
 
         if(submission.StudentId != userClaims.UserId)
         {
+            _logger.LogWarning("SubmissionService: Student {UserId} attempted to update submission belonging to {OwnerId}", userClaims.UserId, submission.StudentId);
             throw new ForbiddenException("You can only update your own submissions.");
         }
 
@@ -128,6 +148,7 @@ public class SubmissionService : ISubmissionService
         submission.LastUpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation("SubmissionService: Updated submission Id:{Id}", id);
     }
 
 
@@ -141,13 +162,19 @@ public class SubmissionService : ISubmissionService
     /// <exception cref="UnauthorizedAccessException"></exception>
     public async Task GradeSubmissionAsync(GradeDto dto, Guid graderId)
     {
+        _logger.LogInformation("SubmissionService: Grading submission Id:{SubmissionId} by GraderId:{GraderId}", dto.SubmissionId, graderId);
         var submission = await _context.Submissions.FindAsync(dto.SubmissionId);
-        if (submission == null) return;
+        if (submission == null)
+        {
+            _logger.LogWarning("SubmissionService: Submission Id:{SubmissionId} not found for grading", dto.SubmissionId);
+            return;
+        }
 
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
 
         if(!userClaims.Roles.Contains("Teacher"))
         {
+            _logger.LogWarning("SubmissionService: Non-teacher attempting to grade submission");
             throw new ForbiddenException("Only teachers can grade submissions.");
         }
 
@@ -160,6 +187,7 @@ public class SubmissionService : ISubmissionService
         submission.Status = SubmissionStatus.Graded;
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation("SubmissionService: Graded submission Id:{SubmissionId} with Marks:{Marks}", dto.SubmissionId, dto.Marks);
     }
 
 
@@ -171,6 +199,7 @@ public class SubmissionService : ISubmissionService
     /// <returns>A SubmissionSummaryDto containing the summary statistics.</returns>
     public async Task<SubmissionSummaryDto> GetSubmissionSummaryAsync()
     {
+        _logger.LogInformation("SubmissionService: Querying submission summary metrics");
         SubmissionSummaryDto submissionSummaryDto = new SubmissionSummaryDto()
         {
             TotalSubmissions = await _context.Submissions.CountAsync(),
@@ -201,6 +230,7 @@ public class SubmissionService : ISubmissionService
     /// <returns>A paginated list of submissions matching the filter criteria.</returns>
     public async Task<PagedResultDto<SubmissionResponseDto>> GetSubmissionsAsync(SubmissionFilterDto filterDto)
     {
+        _logger.LogInformation("SubmissionService: Querying paged submissions");
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
 
         var query = _context.Submissions
@@ -273,6 +303,7 @@ public class SubmissionService : ISubmissionService
             Status = s.Status.ToString()
         }).ToList();
 
+        _logger.LogInformation("SubmissionService: Retrieved {Count} submissions matching filter", totalCount);
 
         // Return paged result
         return new PagedResultDto<SubmissionResponseDto>
@@ -313,6 +344,7 @@ public class SubmissionService : ISubmissionService
     /// <returns>A list of Submission entities made by the specified student.</returns>
     public async Task<List<Submission>?> GetSubmissionsForStudentAsync(Guid targetStudentId)
     {
+        _logger.LogInformation("SubmissionService: Fetching submissions for StudentId:{StudentId}", targetStudentId);
         return await _context.Submissions
                 .Include(s => s.Assignment)
                     .ThenInclude(a => a.Subject)
@@ -323,15 +355,18 @@ public class SubmissionService : ISubmissionService
 
     public async Task<Backend.DTOs.StudentDTOs.StudentSubmissionDetailDto> CreateStudentSubmissionAsync(Guid studentId, Backend.DTOs.StudentDTOs.StudentSubmissionCreateDto dto)
     {
+        _logger.LogInformation("SubmissionService: Creating student submission for StudentId:{StudentId}, AssignmentId:{AssignmentId}", studentId, dto.AssignmentId);
         var assignment = await _context.Assignments.FindAsync(dto.AssignmentId);
         if (assignment == null)
         {
+            _logger.LogWarning("SubmissionService: Assignment Id:{AssignmentId} not found", dto.AssignmentId);
             throw new Backend.Middlewares.BadRequestException("Assignment not found.");
         }
 
         // Deadline check
         if (assignment.Deadline < DateTime.UtcNow && !assignment.AllowLateSubmission)
         {
+            _logger.LogWarning("SubmissionService: Late submission attempt past deadline for AssignmentId:{AssignmentId}", dto.AssignmentId);
             throw new Backend.Middlewares.BadRequestException("The deadline for this assignment has passed and late submissions are not allowed.");
         }
 
@@ -343,6 +378,7 @@ public class SubmissionService : ISubmissionService
         {
             if (!assignment.AllowResubmission)
             {
+                _logger.LogWarning("SubmissionService: Resubmission attempt when disabled for AssignmentId:{AssignmentId}", dto.AssignmentId);
                 throw new Backend.Middlewares.BadRequestException("You have already submitted this assignment and resubmission is disabled.");
             }
 
@@ -361,6 +397,7 @@ public class SubmissionService : ISubmissionService
             existingSubmission.Status = SubmissionStatus.Submitted;
 
             await _context.SaveChangesAsync();
+            _logger.LogInformation("SubmissionService: Updated existing student submission Id:{SubmissionId}", existingSubmission.Id);
 
             return new Backend.DTOs.StudentDTOs.StudentSubmissionDetailDto
             {
@@ -389,6 +426,7 @@ public class SubmissionService : ISubmissionService
 
         _context.Submissions.Add(newSubmission);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("SubmissionService: Created new student submission Id:{SubmissionId}", newSubmission.Id);
 
         return new Backend.DTOs.StudentDTOs.StudentSubmissionDetailDto
         {
@@ -405,8 +443,10 @@ public class SubmissionService : ISubmissionService
 
     public async Task<FileUploadResponseDto> UploadAssignmentFileAsync(IFormFile file, string webRootPath)
     {
+        _logger.LogInformation("SubmissionService: Uploading file {FileName} ({Length} bytes)", file?.FileName, file?.Length ?? 0);
         if (file == null || file.Length == 0)
         {
+            _logger.LogWarning("SubmissionService: Empty or null file upload attempt");
             throw new BadRequestException("No file was selected or the file is empty.");
         }
 
@@ -426,6 +466,7 @@ public class SubmissionService : ISubmissionService
         }
 
         string relativePath = $"/assignments/{uniqueFileName}";
+        _logger.LogInformation("SubmissionService: File saved to {Path}", relativePath);
 
         return new FileUploadResponseDto
         {
@@ -437,6 +478,7 @@ public class SubmissionService : ISubmissionService
 
     public async Task UnsubmitAssignmentAsync(Guid studentId, Guid submissionId)
     {
+        _logger.LogInformation("SubmissionService: Unsubmitting submission Id:{SubmissionId} for StudentId:{StudentId}", submissionId, studentId);
         var submission = await _context.Submissions
             .Include(s => s.Assignment)
             .FirstOrDefaultAsync(s => (s.Id == submissionId || s.AssignmentId == submissionId) && (studentId == Guid.Empty || s.StudentId == studentId));
@@ -450,16 +492,19 @@ public class SubmissionService : ISubmissionService
 
         if (submission == null)
         {
+            _logger.LogWarning("SubmissionService: Submission Id:{SubmissionId} not found for unsubmit", submissionId);
             throw new BadRequestException("Submission not found or does not belong to you.");
         }
 
         if (!submission.Assignment.AllowResubmission)
         {
+            _logger.LogWarning("SubmissionService: Unsubmit attempted when resubmission disabled for AssignmentId:{AssignmentId}", submission.AssignmentId);
             throw new BadRequestException("Resubmission is not enabled for this assignment.");
         }
 
         if (submission.Assignment.Deadline < DateTime.UtcNow && !submission.Assignment.AllowLateSubmission)
         {
+            _logger.LogWarning("SubmissionService: Unsubmit attempted after deadline for AssignmentId:{AssignmentId}", submission.AssignmentId);
             throw new BadRequestException("The deadline for this assignment has passed. Unsubmitting is no longer allowed.");
         }
 
@@ -471,10 +516,12 @@ public class SubmissionService : ISubmissionService
 
         _context.Submissions.Remove(submission);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("SubmissionService: Unsubmitted and deleted submission Id:{SubmissionId}", submission.Id);
     }
 
     public async Task<PagedResultDto<StudentSubmissionHistoryResponseDto>> GetStudentSubmissionHistoryPagedAsync(Guid studentId, StudentSubmissionHistoryFilterDto filterDto)
     {
+        _logger.LogInformation("SubmissionService: Fetching submission history for StudentId:{StudentId}", studentId);
         var query = _context.Submissions
             .Include(s => s.Assignment)
                 .ThenInclude(a => a.Class)
@@ -532,6 +579,8 @@ public class SubmissionService : ISubmissionService
                 Deadline = s.Assignment.Deadline
             })
             .ToListAsync();
+
+        _logger.LogInformation("SubmissionService: Found {Count} submission history records for StudentId:{StudentId}", totalCount, studentId);
 
         return new PagedResultDto<StudentSubmissionHistoryResponseDto>
         {

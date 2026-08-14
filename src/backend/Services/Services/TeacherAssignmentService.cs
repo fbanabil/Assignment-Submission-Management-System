@@ -8,22 +8,31 @@ using Backend.DTOs.TeacherDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Middlewares;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 
 public class TeacherAssignmentService : ITeacherAssignmentService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<TeacherAssignmentService> _logger;
 
-    public TeacherAssignmentService(AppDbContext context)
+    public TeacherAssignmentService(AppDbContext context, ILogger<TeacherAssignmentService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    public async Task<IEnumerable<TeacherAssignment>> GetAllTeacherAssignmentsAsync() =>
-        await _context.TeacherAssignments.Include(ta => ta.Teacher).Include(ta => ta.ClassSubject).ToListAsync();
+    public async Task<IEnumerable<TeacherAssignment>> GetAllTeacherAssignmentsAsync()
+    {
+        _logger.LogInformation("TeacherAssignmentService: Fetching all teacher assignments");
+        return await _context.TeacherAssignments.Include(ta => ta.Teacher).Include(ta => ta.ClassSubject).ToListAsync();
+    }
 
-    public async Task<TeacherAssignment?> GetTeacherAssignmentByIdAsync(Guid id) =>
-        await _context.TeacherAssignments.FindAsync(id);
+    public async Task<TeacherAssignment?> GetTeacherAssignmentByIdAsync(Guid id)
+    {
+        _logger.LogInformation("TeacherAssignmentService: Fetching teacher assignment by Id:{Id}", id);
+        return await _context.TeacherAssignments.FindAsync(id);
+    }
 
     /// <summary>
     /// This method creates a new teacher assignment based on the provided TeacherAssignmentCreateDto.
@@ -33,6 +42,7 @@ public class TeacherAssignmentService : ITeacherAssignmentService
     /// <returns>The created TeacherAssignment entity.</returns>
     public async Task<TeacherAssignment> CreateTeacherAssignmentAsync(TeacherAssignmentCreateDto dto)
     {
+        _logger.LogInformation("TeacherAssignmentService: Creating teacher assignment for TeacherId:{TeacherId}", dto.TeacherId);
         Guid classSubjectId = dto.ClassSubjectId;
 
         var exists = await _context.TeacherAssignments.AnyAsync(ta => ta.TeacherId == dto.TeacherId && ta.ClassSubjectId == classSubjectId);
@@ -48,6 +58,7 @@ public class TeacherAssignmentService : ITeacherAssignmentService
                 var assignmentExists = await _context.TeacherAssignments.AnyAsync(ta => ta.TeacherId == dto.TeacherId && ta.ClassSubjectId == classSubjectId);
                 if (assignmentExists)
                 {
+                    _logger.LogWarning("TeacherAssignmentService: Teacher assignment already exists for TeacherId:{TeacherId}, ClassSubjectId:{ClassSubjectId}", dto.TeacherId, classSubjectId);
                     throw new BadRequestException($"This teacher assigment already exists");
                 }
 
@@ -75,6 +86,7 @@ public class TeacherAssignmentService : ITeacherAssignmentService
 
         _context.TeacherAssignments.Add(assignment);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("TeacherAssignmentService: Created teacher assignment Id:{Id}", assignment.Id);
         return assignment;
     }
 
@@ -84,11 +96,17 @@ public class TeacherAssignmentService : ITeacherAssignmentService
     /// <param name="id">The ID of the teacher assignment to delete.</param>
     public async Task DeleteTeacherAssignmentAsync(Guid id)
     {
+        _logger.LogInformation("TeacherAssignmentService: Deleting teacher assignment Id:{Id}", id);
         var assignment = await _context.TeacherAssignments.FindAsync(id);
         if (assignment != null)
         {
             _context.TeacherAssignments.Remove(assignment);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("TeacherAssignmentService: Deleted teacher assignment Id:{Id}", id);
+        }
+        else
+        {
+            _logger.LogWarning("TeacherAssignmentService: Teacher assignment Id:{Id} not found for deletion", id);
         }
     }
 
@@ -99,6 +117,7 @@ public class TeacherAssignmentService : ITeacherAssignmentService
     /// <returns>A PagedResultDto containing the filtered teacher assignments.</returns>
     public async Task<PagedResultDto<TeacherAssignmentResponseDto>> GetTeacherAssignmentsAsync(TeacherAssignmentFilterDto dto)
     {
+        _logger.LogInformation("TeacherAssignmentService: Querying teacher assignments");
         var query = _context.TeacherAssignments
             .Include(ta => ta.Teacher)
             .Include(ta => ta.ClassSubject)
@@ -149,6 +168,8 @@ public class TeacherAssignmentService : ITeacherAssignmentService
                 AssignedAt = DateTime.UtcNow 
             })
             .ToListAsync();
+
+        _logger.LogInformation("TeacherAssignmentService: Retrieved {Count} teacher assignments matching filter", totalCount);
         return new PagedResultDto<TeacherAssignmentResponseDto>
         {
             Items = items,
@@ -165,6 +186,7 @@ public class TeacherAssignmentService : ITeacherAssignmentService
     /// <returns>A list of TeacherAssignedClassSubjectDto objects representing the assigned classes.</returns>
     public async Task<List<TeacherAssignedClassSubjectDto>> GetAssignedClasses(Guid teacherId)
     {
+        _logger.LogInformation("TeacherAssignmentService: Querying assigned classes for TeacherId:{TeacherId}", teacherId);
         var assignedClasses = await _context.TeacherAssignments
             .Where(ta => ta.TeacherId == teacherId)
             .Include(ta => ta.ClassSubject)
@@ -187,6 +209,8 @@ public class TeacherAssignmentService : ITeacherAssignmentService
                     .Count()
             })
             .ToListAsync();
+
+        _logger.LogInformation("TeacherAssignmentService: Found {Count} assigned classes for TeacherId:{TeacherId}", assignedClasses.Count, teacherId);
         return assignedClasses;
     }
 
@@ -195,6 +219,7 @@ public class TeacherAssignmentService : ITeacherAssignmentService
     /// </summary>
     public async Task<PagedResultDto<TeacherAssignedClassSubjectDto>> GetAssignedClassesPagedAsync(Guid teacherId, TeacherClassFilterDto filterDto)
     {
+        _logger.LogInformation("TeacherAssignmentService: Querying paged assigned classes for TeacherId:{TeacherId}", teacherId);
         var query = _context.TeacherAssignments
             .Where(ta => ta.TeacherId == teacherId)
             .Include(ta => ta.ClassSubject)
@@ -259,6 +284,8 @@ public class TeacherAssignmentService : ITeacherAssignmentService
                     .Count()
             })
             .ToListAsync();
+
+        _logger.LogInformation("TeacherAssignmentService: Retrieved {Count} paged assigned classes for TeacherId:{TeacherId}", totalCount, teacherId);
 
         return new PagedResultDto<TeacherAssignedClassSubjectDto>
         {

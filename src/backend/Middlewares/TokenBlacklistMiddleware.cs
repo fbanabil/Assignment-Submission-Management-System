@@ -1,12 +1,14 @@
-﻿using Backend.Helpers;
+using Backend.Helpers;
 
 public class TokenBlacklistMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<TokenBlacklistMiddleware> _logger;
 
-    public TokenBlacklistMiddleware(RequestDelegate next)
+    public TokenBlacklistMiddleware(RequestDelegate next, ILogger<TokenBlacklistMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
 
@@ -29,6 +31,7 @@ public class TokenBlacklistMiddleware
             // The middleware no longer cares if this is checking Redis, SQL, or Memory
             if (await blacklistRepo.IsBlacklistedAsync(token))
             {
+                _logger.LogWarning("TokenBlacklistMiddleware: Revoked token attempt on {Method} {Path}", context.Request.Method, context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsJsonAsync(new { error = "Token revoked" });

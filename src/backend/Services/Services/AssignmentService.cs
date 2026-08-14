@@ -10,6 +10,7 @@ using Backend.DTOs.StudentDTOs;
 using Backend.DTOs.TeacherDTOs;
 using Backend.DTOs.UserDTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Security.Claims;
 
@@ -20,23 +21,31 @@ public class AssignmentService : IAssignmentService
     private readonly AppDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IUserService _userService;
+    private readonly ILogger<AssignmentService> _logger;
 
-    public AssignmentService(AppDbContext context, IHttpContextAccessor httpContextAccessor, IUserService userService)
+    public AssignmentService(AppDbContext context, IHttpContextAccessor httpContextAccessor, IUserService userService, ILogger<AssignmentService> logger)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;
         _userService = userService;
+        _logger = logger;
     }
 
-    public async Task<IEnumerable<Assignment>> GetAllAssignmentsAsync() =>
-        await _context.Assignments
+    public async Task<IEnumerable<Assignment>> GetAllAssignmentsAsync()
+    {
+        _logger.LogInformation("AssignmentService: Fetching all assignments");
+        return await _context.Assignments
             .Include(a => a.Class)
             .Include(a => a.Subject)
             .Include(a => a.Teacher)
             .ToListAsync();
+    }
 
-    public async Task<Assignment?> GetAssignmentByIdAsync(Guid id) =>
-        await _context.Assignments.FindAsync(id);
+    public async Task<Assignment?> GetAssignmentByIdAsync(Guid id)
+    {
+        _logger.LogInformation("AssignmentService: Fetching assignment by Id:{Id}", id);
+        return await _context.Assignments.FindAsync(id);
+    }
 
 
 
@@ -48,6 +57,7 @@ public class AssignmentService : IAssignmentService
     /// <returns>The created AssignmentResponseDto entity.</returns>
     public async Task<AssignmentResponseDto> CreateAssignmentAsync(AssignmentCreateDto dto)
     {
+        _logger.LogInformation("AssignmentService: Creating assignment with Title:{Title}", dto.Title);
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
         var assignment = new Assignment
         {
@@ -69,6 +79,7 @@ public class AssignmentService : IAssignmentService
         _context.Assignments.Add(assignment);
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation("AssignmentService: Created assignment Id:{Id}", assignment.Id);
         AssignmentResponseDto assignmentResponseDto = await AssignmentToAssignmentResponseDto(assignment);
 
         return assignmentResponseDto;
@@ -83,13 +94,19 @@ public class AssignmentService : IAssignmentService
     /// <returns>The updated AssignmentResponseDto.</returns>
     public async Task<AssignmentResponseDto> UpdateAssignmentAsync(Guid id, AssignmentUpdateDto dto)
     {
+        _logger.LogInformation("AssignmentService: Updating assignment Id:{Id}", id);
         var assignment = await _context.Assignments.FindAsync(id);
-        if (assignment == null) throw new NotFoundException($"Assignment with ID {id} not found.");
+        if (assignment == null)
+        {
+            _logger.LogWarning("AssignmentService: Assignment Id:{Id} not found", id);
+            throw new NotFoundException($"Assignment with ID {id} not found.");
+        }
 
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
 
         if(assignment.TeacherId != userClaims.UserId)
         {
+            _logger.LogWarning("AssignmentService: User {UserId} unauthorized to update assignment Id:{Id}", userClaims.UserId, id);
             throw new ForbiddenException("You are not authorized to update this assignment.");
         }
 
@@ -105,6 +122,7 @@ public class AssignmentService : IAssignmentService
         assignment.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation("AssignmentService: Updated assignment Id:{Id}", id);
 
         AssignmentResponseDto assignmentResponseDto = await AssignmentToAssignmentResponseDto(assignment);
 
@@ -120,12 +138,14 @@ public class AssignmentService : IAssignmentService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DeleteAssignmentAsync(Guid id)
     {
+        _logger.LogInformation("AssignmentService: Deleting assignment Id:{Id}", id);
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
 
         var assignment = await _context.Assignments.FindAsync(id);
 
         if(assignment != null && assignment.TeacherId != userClaims.UserId)
         {
+            _logger.LogWarning("AssignmentService: User {UserId} unauthorized to delete assignment Id:{Id}", userClaims.UserId, id);
             throw new ForbiddenException("You are not authorized to delete this assignment.");
         }
 
@@ -134,6 +154,11 @@ public class AssignmentService : IAssignmentService
         {
             _context.Assignments.Remove(assignment);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("AssignmentService: Deleted assignment Id:{Id}", id);
+        }
+        else
+        {
+            _logger.LogWarning("AssignmentService: Assignment Id:{Id} not found for deletion", id);
         }
     }
 
@@ -145,6 +170,7 @@ public class AssignmentService : IAssignmentService
     /// <returns>An AssignmentSummaryDto containing the summary of assignments.</returns>
     public async Task<AssignmentSummaryDto> GetAssignmentSummaryAsync()
     {
+        _logger.LogInformation("AssignmentService: Querying assignment summary metrics");
         AssignmentSummaryDto assignmentSummaryDto = new AssignmentSummaryDto()
         {
             TotalAssignments = await _context.Assignments.CountAsync(),
@@ -174,6 +200,7 @@ public class AssignmentService : IAssignmentService
     /// <returns>A PagedResultDto containing the filtered assignments along with pagination information.</returns>
     public async Task<PagedResultDto<AssignmentResponseDto>> GetAssignmentsAsync(AssignmentFilterDto filterDto)
     {
+        _logger.LogInformation("AssignmentService: Querying paged assignments");
         var query = _context.Assignments
             .Include(a => a.Class)
             .Include(a => a.Subject)
@@ -219,7 +246,7 @@ public class AssignmentService : IAssignmentService
             _ => isDesc ? query.OrderByDescending(a => a.Deadline) : query.OrderBy(a => a.Deadline)
         };
 
-        return await query
+        var items = await query
             .Skip((filterDto.PageNumber - 1) * filterDto.PageSize)
             .Take(filterDto.PageSize)
             .Select(a => new AssignmentResponseDto
@@ -242,19 +269,17 @@ public class AssignmentService : IAssignmentService
                 AllowLateSubmission = a.AllowLateSubmission,
                 AllowResubmission = a.AllowResubmission
             })
-            .ToListAsync()
-            .ContinueWith(t =>
-            {
-                var items = t.Result;
-                var totalCount = query.Count();
-                return new PagedResultDto<AssignmentResponseDto>
-                {
-                    Items = items,
-                    TotalCount = totalCount,
-                    PageNumber = filterDto.PageNumber,
-                    PageSize = filterDto.PageSize
-                };
-            });
+            .ToListAsync();
+
+        var totalCount = await query.CountAsync();
+        _logger.LogInformation("AssignmentService: Retrieved {Count} assignments matching filter", totalCount);
+        return new PagedResultDto<AssignmentResponseDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = filterDto.PageNumber,
+            PageSize = filterDto.PageSize
+        };
     }
 
 
@@ -317,6 +342,7 @@ public class AssignmentService : IAssignmentService
     /// <exception cref="UnauthorizedAccessException">Thrown when the user ID claim is not found in the HTTP context.</exception>
     public async Task<PagedResultDto<AssignmentResponseDto>> GetAssignmentsForTeacher(AssignmentFilterDto dto)
     {
+        _logger.LogInformation("AssignmentService: Fetching assignments for teacher");
         var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedException("User ID claim not found.");
         var userRoles = _httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>(); 
         var query = _context.Assignments
@@ -390,6 +416,7 @@ public class AssignmentService : IAssignmentService
             AllowResubmission = a.AllowResubmission
         }).ToList();
 
+        _logger.LogInformation("AssignmentService: Retrieved {Count} assignments for teacher", totalCount);
         return new PagedResultDto<AssignmentResponseDto>
         {
             Items = assignmentDtos,
@@ -443,6 +470,7 @@ public class AssignmentService : IAssignmentService
     /// <returns>A list of Assignment entities that belong to the specified classes.</returns>
     public async Task<List<Assignment>?> GetAssignmentsForClassesAsync(List<Guid> enrolledClassIds)
     {
+        _logger.LogInformation("AssignmentService: Querying assignments for {Count} enrolled classes", enrolledClassIds.Count);
         var assignmentsQuery = _context.Assignments
                 .Include(a => a.Class)
                 .Include(a => a.Subject)
@@ -455,6 +483,7 @@ public class AssignmentService : IAssignmentService
 
     public async Task<PagedResultDto<StudentAssignmentResponseDto>> GetAssignmentsForStudentPagedAsync(Guid studentId, StudentAssignmentFilterDto filterDto)
     {
+        _logger.LogInformation("AssignmentService: Querying paged assignments for StudentId:{StudentId}", studentId);
         // Get class IDs the student is enrolled in
         var enrolledClassIds = await _context.StudentEnrollments
             .Where(se => se.StudentId == studentId)
@@ -536,6 +565,7 @@ public class AssignmentService : IAssignmentService
             .Take(pageSize)
             .ToList();
 
+        _logger.LogInformation("AssignmentService: Found {TotalCount} assignments for StudentId:{StudentId}", totalCount, studentId);
         return new PagedResultDto<StudentAssignmentResponseDto>
         {
             Items = pagedItems,
@@ -547,13 +577,18 @@ public class AssignmentService : IAssignmentService
 
     public async Task<StudentAssignmentDetailDto?> GetAssignmentDetailForStudentAsync(Guid studentId, Guid assignmentId)
     {
+        _logger.LogInformation("AssignmentService: Fetching assignment detail for AssignmentId:{AssignmentId}, StudentId:{StudentId}", assignmentId, studentId);
         var assignment = await _context.Assignments
             .Include(a => a.Class)
             .Include(a => a.Subject)
             .Include(a => a.Teacher)
             .FirstOrDefaultAsync(a => a.Id == assignmentId);
 
-        if (assignment == null) return null;
+        if (assignment == null)
+        {
+            _logger.LogWarning("AssignmentService: Assignment Id:{AssignmentId} not found", assignmentId);
+            return null;
+        }
 
         var submission = await _context.Submissions
             .Include(s => s.GradeGiver)

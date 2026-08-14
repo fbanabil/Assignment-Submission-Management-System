@@ -5,6 +5,8 @@ using AssignmentSystem.Api.Services.Services;
 using Backend.DTOs.TeacherAssignmentDTOs;
 using Backend.DTOs.TeacherDTOs;
 using Backend.Middlewares;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Tests.Helpers;
 
 namespace Tests.ServiceTests
@@ -17,7 +19,7 @@ namespace Tests.ServiceTests
         public TeacherAssignmentServiceTests()
         {
             _context = TestDbContextFactory.CreateInMemoryDbContext();
-            _service = new TeacherAssignmentService(_context);
+            _service = new TeacherAssignmentService(_context, Mock.Of<ILogger<TeacherAssignmentService>>());
         }
 
         [Fact]

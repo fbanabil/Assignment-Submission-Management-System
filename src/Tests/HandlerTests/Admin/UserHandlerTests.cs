@@ -2,6 +2,7 @@ using Backend.DTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Admin
@@ -14,7 +15,7 @@ namespace Tests.HandlerTests.Admin
         public UserHandlerTests()
         {
             _mockUserService = new Mock<IUserService>();
-            _handler = new UserHandler(_mockUserService.Object);
+            _handler = new UserHandler(_mockUserService.Object, Mock.Of<ILogger<UserHandler>>());
         }
 
         [Fact]

@@ -9,6 +9,7 @@ using Backend.Handlers.Student;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -45,10 +46,10 @@ namespace Tests.ControllerTests
             _mockUserService.Setup(u => u.GetUserIdAndEmailFromClaims())
                 .ReturnsAsync((studentUser.Id, studentUser.Email, new List<string> { "Student" }));
 
-            var dashboardHandler = new StudentDashboardHandler(_context, _mockUserService.Object);
-            var assignmentHandler = new StudentAssignmentHandler(_mockAssignmentService.Object, _mockSubmissionService.Object, _mockUserService.Object, _context);
+            var dashboardHandler = new StudentDashboardHandler(_context, _mockUserService.Object, Mock.Of<ILogger<StudentDashboardHandler>>());
+            var assignmentHandler = new StudentAssignmentHandler(_mockAssignmentService.Object, _mockSubmissionService.Object, _mockUserService.Object, _context, Mock.Of<ILogger<StudentAssignmentHandler>>());
 
-            _controller = new StudentController(dashboardHandler, assignmentHandler, _mockEnvironment.Object);
+            _controller = new StudentController(dashboardHandler, assignmentHandler, _mockEnvironment.Object, Mock.Of<ILogger<StudentController>>());
         }
 
         [Fact]

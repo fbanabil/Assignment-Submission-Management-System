@@ -10,6 +10,7 @@ using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Controllers
 {
@@ -26,6 +27,7 @@ namespace Backend.Controllers
         private readonly TeacherAssignmentHandler _teacherAssignmentHandler;
         private readonly AssignmentHandler _assignmentHandler;
         private readonly SubmissionHandler _submissionHandler;
+        private readonly ILogger<AdminController> _logger;
 
         public AdminController(
             DashboardHandler dashboardHandler,
@@ -35,7 +37,8 @@ namespace Backend.Controllers
             ClassSubjectHandler classSubjectHandler,
             TeacherAssignmentHandler teacherAssignmentHandler,
             AssignmentHandler assignmentHandler,
-            SubmissionHandler submissionHandler)
+            SubmissionHandler submissionHandler,
+            ILogger<AdminController> logger)
         {
             _dashboardHandler = dashboardHandler;
             _userHandler = userHandler;
@@ -45,6 +48,7 @@ namespace Backend.Controllers
             _teacherAssignmentHandler = teacherAssignmentHandler;
             _assignmentHandler = assignmentHandler;
             _submissionHandler = submissionHandler;
+            _logger = logger;
         }
 
 
@@ -56,7 +60,13 @@ namespace Backend.Controllers
         /// <returns>A DashboardSummaryDto containing the summary statistics.</returns>
         [HttpGet("summary")]
         public async Task<IActionResult> Dashboard()
-            => await _dashboardHandler.HandleDashboardAsync();
+        {
+            _logger.LogInformation("AdminController: Dashboard summary requested");
+            var result = await _dashboardHandler.HandleDashboardAsync();
+            _logger.LogInformation("AdminController: Dashboard summary executed successfully");
+            return result;
+        }
+
 
 
 
@@ -67,7 +77,12 @@ namespace Backend.Controllers
         /// <returns>A PagedResultDto containing the filtered user data and pagination information.</returns>
         [HttpGet]
         public async Task<IActionResult> Users([FromQuery] UserFilterDto filterDto)
-            => await _userHandler.HandleGetUsersAsync(filterDto);
+        {
+            _logger.LogInformation("AdminController: Get Users requested");
+            var result = await _userHandler.HandleGetUsersAsync(filterDto);
+            _logger.LogInformation("AdminController: Get Users executed successfully");
+            return result;
+        }
 
 
 
@@ -79,7 +94,12 @@ namespace Backend.Controllers
         /// <returns>A PagedResultDto containing the filtered class data and pagination information.</returns>
         [HttpGet]
         public async Task<IActionResult> Classes([FromQuery] ClassFilterDto filterDto)
-            => await _classHandler.HandleGetClassesAsync(filterDto);
+        {
+            _logger.LogInformation("AdminController: Get Classes requested");
+            var result = await _classHandler.HandleGetClassesAsync(filterDto);
+            _logger.LogInformation("AdminController: Get Classes executed successfully");
+            return result;
+        }
 
 
 
@@ -91,7 +111,12 @@ namespace Backend.Controllers
         /// <returns>The created class data.</returns>
         [HttpPost]
         public async Task<IActionResult> Classes([FromBody] ClassCreateDto dto)
-            => await _classHandler.HandleCreateClassAsync(dto);
+        {
+            _logger.LogInformation("AdminController: Create Class requested with Name:{ClassName}", dto?.Name);
+            var result = await _classHandler.HandleCreateClassAsync(dto);
+            _logger.LogInformation("AdminController: Create Class executed successfully");
+            return result;
+        }
 
 
 
@@ -104,7 +129,12 @@ namespace Backend.Controllers
         /// <returns>A 204 No Content status code upon successful update.</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> Classes([FromRoute] Guid id, [FromBody] ClassUpdateDto dto)
-            => await _classHandler.HandleUpdateClassAsync(id, dto);
+        {
+            _logger.LogInformation("AdminController: Update Class requested for ClassId:{ClassId}", id);
+            var result = await _classHandler.HandleUpdateClassAsync(id, dto);
+            _logger.LogInformation("AdminController: Update Class executed successfully");
+            return result;
+        }
 
 
 
@@ -116,7 +146,12 @@ namespace Backend.Controllers
         /// <returns>A 204 No Content status code upon successful deletion.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClass([FromRoute] Guid id)
-            => await _classHandler.HandleDeleteClassAsync(id);
+        {
+            _logger.LogInformation("AdminController: Delete Class requested for ClassId:{ClassId}", id);
+            var result = await _classHandler.HandleDeleteClassAsync(id);
+            _logger.LogInformation("AdminController: Delete Class executed successfully");
+            return result;
+        }
 
 
 
@@ -128,7 +163,12 @@ namespace Backend.Controllers
         /// <returns>A paginated list of subjects matching the filter criteria.</returns>
         [HttpGet]
         public async Task<IActionResult> Subjects([FromQuery] SubjectFilterDto filterDto)
-            => await _subjectHandler.HandleGetSubjectsAsync(filterDto);
+        {
+            _logger.LogInformation("AdminController: Get Subjects requested");
+            var result = await _subjectHandler.HandleGetSubjectsAsync(filterDto);
+            _logger.LogInformation("AdminController: Get Subjects executed successfully");
+            return result;
+        }
 
 
 
@@ -140,7 +180,12 @@ namespace Backend.Controllers
         /// <returns>The created subject data along with a 201 Created status code.</returns>
         [HttpPost]
         public async Task<IActionResult> Subjects([FromBody] SubjectCreateDto dto)
-            => await _subjectHandler.HandleCreateSubjectAsync(dto);
+        {
+            _logger.LogInformation("AdminController: Create Subject requested with Code:{SubjectCode}", dto?.Code);
+            var result = await _subjectHandler.HandleCreateSubjectAsync(dto);
+            _logger.LogInformation("AdminController: Create Subject executed successfully");
+            return result;
+        }
 
 
 
@@ -153,7 +198,12 @@ namespace Backend.Controllers
         /// <returns>A 204 No Content status code upon successful update.</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> Subjects([FromRoute] Guid id, [FromBody] SubjectUpdateDto dto)
-            => await _subjectHandler.HandleUpdateAsync(id, dto);
+        {
+            _logger.LogInformation("AdminController: Update Subject requested for SubjectId:{SubjectId}", id);
+            var result = await _subjectHandler.HandleUpdateAsync(id, dto);
+            _logger.LogInformation("AdminController: Update Subject executed successfully");
+            return result;
+        }
 
 
 
@@ -165,7 +215,12 @@ namespace Backend.Controllers
         /// <returns>A 204 No Content status code upon successful deletion.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSubject([FromRoute] Guid id)
-            => await _subjectHandler.HandleDeleteSubjectAsync(id);
+        {
+            _logger.LogInformation("AdminController: Delete Subject requested for SubjectId:{SubjectId}", id);
+            var result = await _subjectHandler.HandleDeleteSubjectAsync(id);
+            _logger.LogInformation("AdminController: Delete Subject executed successfully");
+            return result;
+        }
 
 
 
@@ -177,7 +232,12 @@ namespace Backend.Controllers
         /// <returns>The created class-subject data along with a 201 Created status code.</returns>
         [HttpPost]
         public async Task<IActionResult> ClassSubjects([FromBody] ClassSubjectCreateDto dto)
-            => await _classSubjectHandler.HandleCreateClassSubjectAsync(dto);
+        {
+            _logger.LogInformation("AdminController: Create ClassSubject requested for ClassId:{ClassId}, SubjectId:{SubjectId}", dto?.ClassId, dto?.SubjectId);
+            var result = await _classSubjectHandler.HandleCreateClassSubjectAsync(dto);
+            _logger.LogInformation("AdminController: Create ClassSubject executed successfully");
+            return result;
+        }
 
 
 
@@ -190,7 +250,12 @@ namespace Backend.Controllers
         /// <returns>A 204 No Content status code upon successful deletion.</returns>
         [HttpDelete("ClassSubjects")]
         public async Task<IActionResult> DeleteClassSubject([FromQuery] Guid classId, [FromQuery] Guid subjectId)
-            => await _classSubjectHandler.HandleDeleteClassSubjectAsync(classId, subjectId);
+        {
+            _logger.LogInformation("AdminController: Delete ClassSubject requested for ClassId:{ClassId}, SubjectId:{SubjectId}", classId, subjectId);
+            var result = await _classSubjectHandler.HandleDeleteClassSubjectAsync(classId, subjectId);
+            _logger.LogInformation("AdminController: Delete ClassSubject executed successfully");
+            return result;
+        }
 
 
 
@@ -202,7 +267,12 @@ namespace Backend.Controllers
         /// <returns>A paginated list of teacher assignments.</returns>
         [HttpGet]
         public async Task<IActionResult> TeacherAssignments([FromQuery] TeacherAssignmentFilterDto dto)
-            => await _teacherAssignmentHandler.HandleGetTeacherAssignmentsAsync(dto);
+        {
+            _logger.LogInformation("AdminController: Get TeacherAssignments requested");
+            var result = await _teacherAssignmentHandler.HandleGetTeacherAssignmentsAsync(dto);
+            _logger.LogInformation("AdminController: Get TeacherAssignments executed successfully");
+            return result;
+        }
 
 
 
@@ -214,7 +284,12 @@ namespace Backend.Controllers
         /// <returns>The created teacher assignment data along with a 201 Created status code.</returns>
         [HttpPost]
         public async Task<IActionResult> TeacherAssignments([FromBody] TeacherAssignmentCreateDto dto)
-            => await _teacherAssignmentHandler.HandleCreateTeacherAssignmentAsync(dto);
+        {
+            _logger.LogInformation("AdminController: Create TeacherAssignment requested for TeacherId:{TeacherId}", dto?.TeacherId);
+            var result = await _teacherAssignmentHandler.HandleCreateTeacherAssignmentAsync(dto);
+            _logger.LogInformation("AdminController: Create TeacherAssignment executed successfully");
+            return result;
+        }
 
 
 
@@ -226,7 +301,12 @@ namespace Backend.Controllers
         /// <returns>A 204 No Content status code upon successful deletion.</returns>
         [HttpDelete("TeacherAssignments/{id}")]
         public async Task<IActionResult> DeleteTeacherAssignment([FromRoute] Guid id)
-            => await _teacherAssignmentHandler.HandleDeleteTeacherAssignmentAsync(id);
+        {
+            _logger.LogInformation("AdminController: Delete TeacherAssignment requested for Id:{Id}", id);
+            var result = await _teacherAssignmentHandler.HandleDeleteTeacherAssignmentAsync(id);
+            _logger.LogInformation("AdminController: Delete TeacherAssignment executed successfully");
+            return result;
+        }
 
 
 
@@ -238,7 +318,12 @@ namespace Backend.Controllers
         /// <returns>A paginated list of assignments.</returns>
         [HttpGet]
         public async Task<IActionResult> Assignments([FromQuery] AssignmentFilterDto filterDto)
-            => await _assignmentHandler.HandleGetAssignmentsAsync(filterDto);
+        {
+            _logger.LogInformation("AdminController: Get Assignments requested");
+            var result = await _assignmentHandler.HandleGetAssignmentsAsync(filterDto);
+            _logger.LogInformation("AdminController: Get Assignments executed successfully");
+            return result;
+        }
 
 
 
@@ -250,6 +335,11 @@ namespace Backend.Controllers
         /// <returns>A paginated list of submissions.</returns>
         [HttpGet]
         public async Task<IActionResult> Submissions([FromQuery] SubmissionFilterDto filterDto)
-            => await _submissionHandler.HandleGetSubmissionsAsync(filterDto);
+        {
+            _logger.LogInformation("AdminController: Get Submissions requested");
+            var result = await _submissionHandler.HandleGetSubmissionsAsync(filterDto);
+            _logger.LogInformation("AdminController: Get Submissions executed successfully");
+            return result;
+        }
     }
 }

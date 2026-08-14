@@ -9,6 +9,7 @@ using Backend.DTOs.SubmissionDTOs;
 using Backend.Middlewares;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Text;
 using Tests.Helpers;
@@ -35,7 +36,7 @@ namespace Tests.ServiceTests
 
             _mockEnvironment.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
 
-            _service = new SubmissionService(_context, _mockUserService.Object, _mockEnvironment.Object);
+            _service = new SubmissionService(_context, _mockUserService.Object, _mockEnvironment.Object, Mock.Of<ILogger<SubmissionService>>());
         }
 
         [Fact]

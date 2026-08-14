@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics;
 using System.Text.Json;
 
 namespace Backend.Middlewares
@@ -56,11 +56,11 @@ namespace Backend.Middlewares
 
             if (statusCode == StatusCodes.Status500InternalServerError)
             {
-                _logger.LogError(exception, "An unexpected error occurred.");
+                _logger.LogError(exception, "Unhandled error on HTTP {Method} {Path}: {Message}", httpContext.Request.Method, httpContext.Request.Path, message);
             }
             else
             {
-                _logger.LogWarning(exception, "A handled exception occurred.");
+                _logger.LogWarning("Handled domain exception ({StatusCode}) on HTTP {Method} {Path}: {Message}", statusCode, httpContext.Request.Method, httpContext.Request.Path, message);
             }
 
             var responseObj = new

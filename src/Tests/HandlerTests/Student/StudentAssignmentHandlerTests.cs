@@ -9,6 +9,7 @@ using Backend.Handlers.Student;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -44,7 +45,8 @@ namespace Tests.HandlerTests.Student
                 _mockAssignmentService.Object,
                 _mockSubmissionService.Object,
                 _mockUserService.Object,
-                _context);
+                _context,
+                Mock.Of<ILogger<StudentAssignmentHandler>>());
         }
 
         [Fact]

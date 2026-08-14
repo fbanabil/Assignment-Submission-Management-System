@@ -3,6 +3,7 @@ using Backend.DTOs.SubmissionDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Admin
@@ -15,7 +16,7 @@ namespace Tests.HandlerTests.Admin
         public SubmissionHandlerTests()
         {
             _mockSubmissionService = new Mock<ISubmissionService>();
-            _handler = new SubmissionHandler(_mockSubmissionService.Object);
+            _handler = new SubmissionHandler(_mockSubmissionService.Object, Mock.Of<ILogger<SubmissionHandler>>());
         }
 
         [Fact]

@@ -6,22 +6,31 @@ using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.ClassDTOs;
 using Backend.DTOs.UserDTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 public class ClassService : IClassService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<ClassService> _logger;
 
-    public ClassService(AppDbContext context)
+    public ClassService(AppDbContext context, ILogger<ClassService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    public async Task<IEnumerable<Class>> GetAllClassesAsync() =>
-        await _context.Classes.ToListAsync();
+    public async Task<IEnumerable<Class>> GetAllClassesAsync()
+    {
+        _logger.LogInformation("ClassService: Fetching all classes");
+        return await _context.Classes.ToListAsync();
+    }
 
-    public async Task<Class?> GetClassByIdAsync(Guid id) =>
-        await _context.Classes.FindAsync(id);
+    public async Task<Class?> GetClassByIdAsync(Guid id)
+    {
+        _logger.LogInformation("ClassService: Fetching class by Id:{ClassId}", id);
+        return await _context.Classes.FindAsync(id);
+    }
 
 
 
@@ -32,6 +41,7 @@ public class ClassService : IClassService
     /// <returns>The created Class entity.</returns>
     public async Task<Class> CreateClassAsync(ClassCreateDto dto)
     {
+        _logger.LogInformation("ClassService: Creating new class {ClassName} {Section}", dto.Name, dto.Section);
         // Create a new Class entity using the data from the ClassCreateDto
         var cls = new Class
         {
@@ -44,6 +54,7 @@ public class ClassService : IClassService
 
         _context.Classes.Add(cls);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ClassService: Created class Id:{ClassId}", cls.Id);
         return cls;
     }
 
@@ -57,14 +68,20 @@ public class ClassService : IClassService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task UpdateClassAsync(Guid id, ClassUpdateDto dto)
     {
+        _logger.LogInformation("ClassService: Updating class Id:{ClassId}", id);
         var cls = await _context.Classes.FindAsync(id);
-        if (cls == null) return;
+        if (cls == null)
+        {
+            _logger.LogWarning("ClassService: Class Id:{ClassId} not found for update", id);
+            return;
+        }
 
         if (dto.Name != null) cls.Name = dto.Name;
         if (dto.Section != null) cls.Section = dto.Section;
         if (dto.AcademicYear != null) cls.AcademicYear = dto.AcademicYear;
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ClassService: Updated class Id:{ClassId}", id);
     }
 
 
@@ -76,11 +93,17 @@ public class ClassService : IClassService
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DeleteClassAsync(Guid id)
     {
+        _logger.LogInformation("ClassService: Deleting class Id:{ClassId}", id);
         var cls = await _context.Classes.FindAsync(id);
         if (cls != null)
         {
             _context.Classes.Remove(cls);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("ClassService: Deleted class Id:{ClassId}", id);
+        }
+        else
+        {
+            _logger.LogWarning("ClassService: Class Id:{ClassId} not found for deletion", id);
         }
     }
 
@@ -95,6 +118,7 @@ public class ClassService : IClassService
     /// <exception cref="NotImplementedException"></exception>
     public async Task<PagedResultDto<ClassResponseDto>> GetClassesAsync(ClassFilterDto filterDto)
     {
+        _logger.LogInformation("ClassService: Querying paged classes");
         // Validate the filterDto parameters, No case sensitivity for Name, Section, and AcademicYear filters
         var query = _context.Classes.AsQueryable();
         if (!string.IsNullOrEmpty(filterDto.Name))
@@ -132,6 +156,7 @@ public class ClassService : IClassService
             })
             .ToListAsync();
 
+        _logger.LogInformation("ClassService: Found {TotalCount} classes matching filter", totalCount);
 
         // Return the paginated result
         return new PagedResultDto<ClassResponseDto>

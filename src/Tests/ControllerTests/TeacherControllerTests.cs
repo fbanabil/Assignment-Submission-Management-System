@@ -10,6 +10,7 @@ using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Teacher;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -45,31 +46,36 @@ namespace Tests.ControllerTests
                 _mockAssignmentService.Object,
                 _mockSubmissionService.Object,
                 _mockTeacherAssignmentService.Object,
-                _mockHttpContextAccessor.Object);
+                _mockHttpContextAccessor.Object,
+                Mock.Of<ILogger<TeacherDashboardHandler>>());
 
             var classHandler = new TeacherClassHandler(
                 _mockUserService.Object,
                 _mockTeacherAssignmentService.Object,
-                _mockHttpContextAccessor.Object);
+                _mockHttpContextAccessor.Object,
+                Mock.Of<ILogger<TeacherClassHandler>>());
 
-            var assignmentHandler = new TeacherAssignmentHandler(_mockAssignmentService.Object);
+            var assignmentHandler = new TeacherAssignmentHandler(_mockAssignmentService.Object, Mock.Of<ILogger<TeacherAssignmentHandler>>());
 
             var submissionHandler = new TeacherSubmissionHandler(
                 _mockUserService.Object,
                 _mockSubmissionService.Object,
-                _mockHttpContextAccessor.Object);
+                _mockHttpContextAccessor.Object,
+                Mock.Of<ILogger<TeacherSubmissionHandler>>());
 
             var enrollmentHandler = new TeacherEnrollmentHandler(
                 _mockUserService.Object,
                 _mockStudentEnrollmentService.Object,
-                _mockHttpContextAccessor.Object);
+                _mockHttpContextAccessor.Object,
+                Mock.Of<ILogger<TeacherEnrollmentHandler>>());
 
             _controller = new TeacherController(
                 dashboardHandler,
                 classHandler,
                 assignmentHandler,
                 submissionHandler,
-                enrollmentHandler);
+                enrollmentHandler,
+                Mock.Of<ILogger<TeacherController>>());
         }
 
         [Fact]

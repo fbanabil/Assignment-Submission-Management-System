@@ -7,6 +7,7 @@ using Backend.Handlers.Teacher;
 using Backend.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -29,7 +30,8 @@ namespace Tests.HandlerTests.Teacher
             _handler = new TeacherSubmissionHandler(
                 _mockUserService.Object,
                 _mockSubmissionService.Object,
-                _mockHttpContextAccessor.Object);
+                _mockHttpContextAccessor.Object,
+                Mock.Of<ILogger<TeacherSubmissionHandler>>());
         }
 
         [Fact]

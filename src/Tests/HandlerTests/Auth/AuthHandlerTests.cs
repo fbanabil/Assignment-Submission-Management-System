@@ -5,6 +5,7 @@ using Backend.Handlers.Auth;
 using Backend.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -21,7 +22,7 @@ namespace Tests.HandlerTests.Auth
         {
             _mockUserService = new Mock<IUserService>();
             (_mockHttpContextAccessor, _httpContext) = MockHelper.CreateMockHttpContext();
-            _handler = new AuthHandler(_mockUserService.Object, _mockHttpContextAccessor.Object);
+            _handler = new AuthHandler(_mockUserService.Object, _mockHttpContextAccessor.Object, Mock.Of<ILogger<AuthHandler>>());
         }
 
         [Fact]

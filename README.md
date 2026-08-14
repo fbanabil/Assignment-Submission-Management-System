@@ -1,219 +1,405 @@
-# Assignment & Submission Management System
+# 🎓 Assignment & Submission Management System
 
-A role-based web application for schools/colleges that lets **Teachers** create and grade assignments, **Students** submit their work and track grades, and **Admins** manage users, classes, subjects, and teacher assignments.
+![.NET 9.0](https://img.shields.io/badge/.NET-9.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![Next.js 16](https://img.shields.io/badge/Next.js-16_App_Router-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Swagger](https://img.shields.io/badge/OpenAPI-Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-Built for the OnnoRokom Projukti Limited Assistant Software Engineer recruitment project.
+An enterprise-grade, role-based web application for educational institutions that enables **Teachers** to publish and grade assignments, **Students** to track deadlines and submit coursework, and **Admins** to manage users, classes, subjects, and teacher allocations.
 
----
-
-## Table of Contents
-
-- [Assignment \& Submission Management System](#assignment--submission-management-system)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Features](#features)
-  - [Tech Stack](#tech-stack)
-  - [Project Structure](#project-structure)
-  - [Prerequisites](#prerequisites)
-  - [Getting Started](#getting-started)
-    - [1. Clone the Repository](#1-clone-the-repository)
-    - [2. Backend \& Database Setup (Docker)](#2-backend--database-setup-docker)
-    - [3. Frontend Setup](#3-frontend-setup)
-  - [Environment Variables](#environment-variables)
-  - [Running Tests](#running-tests)
-  - [API Documentation](#api-documentation)
-  - [Demo Credentials](#demo-credentials)
-  - [Assumptions](#assumptions)
-  - [Known Limitations](#known-limitations)
+Engineered with a decoupled architecture featuring an **ASP.NET Core 9 Web API** backend (using CQRS handlers, FluentValidation, and EF Core 8) paired with a **Next.js 16 (App Router)** frontend, fully containerized using **Docker Compose**.
 
 ---
 
-## Overview
+## 📋 Table of Contents
 
-The system supports three roles — **Admin**, **Teacher**, and **Student** — each with a dedicated dashboard and permission set enforced both in the UI and on the backend API. Teachers create assignments scoped to a class and subject, publish them when ready, and grade student submissions. Students see only the assignments published for their own class, submit their answers, and track their marks and feedback.
+- [🎓 Assignment \& Submission Management System](#-assignment--submission-management-system)
+  - [📋 Table of Contents](#-table-of-contents)
+  - [✨ Key Features](#-key-features)
+    - [🛡️ Role-Based Access Control (RBAC)](#️-role-based-access-control-rbac)
+    - [👑 Admin Management Portal](#-admin-management-portal)
+    - [👨‍🏫 Teacher Workstation](#-teacher-workstation)
+    - [🎓 Student Portal](#-student-portal)
+  - [🏛️ System Architecture](#️-system-architecture)
+  - [🛠️ Tech Stack](#️-tech-stack)
+  - [📁 Project Structure](#-project-structure)
+  - [🔑 Demo Credentials](#-demo-credentials)
+  - [🚀 Quick Start \& Deployment](#-quick-start--deployment)
+    - [Prerequisites](#prerequisites)
+    - [Option A: Docker Compose Deployment (Recommended)](#option-a-docker-compose-deployment-recommended)
+    - [Option B: Manual Local Development Setup](#option-b-manual-local-development-setup)
+      - [1. Start Database Container](#1-start-database-container)
+      - [2. Run ASP.NET Core Backend API](#2-run-aspnet-core-backend-api)
+      - [3. Run Next.js Frontend](#3-run-nextjs-frontend)
+  - [⚙️ Environment Variables](#️-environment-variables)
+    - [Docker / Backend Configuration (`src/docker-compose.yml`)](#docker--backend-configuration-srcdocker-composeyml)
+    - [Frontend Configuration (`src/frontend/.env.local`)](#frontend-configuration-srcfrontendenvlocal)
+  - [📡 API Documentation](#-api-documentation)
+    - [Key API Endpoint Summary](#key-api-endpoint-summary)
+      - [Authentication (`/api/Auth`)](#authentication-apiauth)
+      - [Admin Management (`/api/Admin`)](#admin-management-apiadmin)
+      - [Teacher Operations (`/api/Teacher`)](#teacher-operations-apiteacher)
+      - [Student Operations (`/api/Student`)](#student-operations-apistudent)
+  - [🧪 Testing \& Quality Assurance](#-testing--quality-assurance)
+    - [Test Suite Structure](#test-suite-structure)
+    - [Executing Tests](#executing-tests)
+  - [🔒 Security Architecture](#-security-architecture)
+  - [💡 Design Rationale \& Domain Assumptions](#-design-rationale--domain-assumptions)
+  - [📄 License](#-license)
 
-## Features
+---
 
-- JWT-based authentication with role claims
-- Server-side role-based authorization on every protected endpoint (not just frontend route guards)
-- Admin: manage users, classes, subjects, and teacher-to-class-subject assignments; read-only visibility into all assignments and submissions
-- Teacher: create/edit/delete/publish assignments; view and grade submissions for their own classes/subjects only
-- Student: view published assignments for their class; submit and (where allowed) update submissions before the deadline; view marks and feedback
-- Late submission and resubmission behavior configurable per assignment
-- Swagger/OpenAPI documentation for all endpoints
-- Request/error logging via Serilog
-- Database schema managed with EF Core migrations, plus a seed script for demo data
+## ✨ Key Features
 
-## Tech Stack
+### 🛡️ Role-Based Access Control (RBAC)
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js (App Router), TypeScript, Tailwind CSS, React Hook Form, Zod, Axios |
-| Backend | ASP.NET Core 8 Web API, C#, Entity Framework Core, FluentValidation, Serilog, Swashbuckle |
-| Database | PostgreSQL |
-| Auth | JWT, BCrypt.Net for password hashing |
-| Testing | xUnit, Moq |
-| Infrastructure | Docker (API + PostgreSQL containerized), frontend run locally |
+- **Server-Side Enforcement**: Role claims (`Admin`, `Teacher`, `Student`) are verified on every protected API endpoint via JWT Bearer policies.
+- **Asymmetric Security**: JWT tokens are signed using **RS256 RSA key-pair cryptography** (2048-bit Private/Public keys).
+- **Token Invalidation**: Built-in `TokenBlacklistMiddleware` supports instantaneous server-side token revocation and logout.
 
-## Project Structure
+### 👑 Admin Management Portal
+
+- **User Management**: Complete CRUD interface to onboard, update, and manage Admins, Teachers, and Students.
+- **Academic Structure**: Provision Classes, Subjects, and map Class-Subject relationships.
+- **Workload Allocation**: Assign Teachers to specific Class-Subject combinations.
+- **Student Enrollment**: Assign Students to their respective academic Classes.
+- **System Metrics**: Real-time overview of user counts, active assignments, and submission activity.
+
+### 👨‍🏫 Teacher Workstation
+
+- **Class & Subject Workspace**: Scoped view displaying only assigned classes and subjects.
+- **Assignment Lifecycle**: Create draft assignments, edit due dates/instructions, and publish when ready for students.
+- **Custom Assignment Rules**: Configure `AllowLateSubmission` and `AllowResubmission` on a per-assignment basis.
+- **Grading Engine**: Review student submissions, assign marks (validated against maximum marks server-side), and provide qualitative feedback.
+
+### 🎓 Student Portal
+
+- **Personalized Dashboard**: View published assignments relevant only to the student's enrolled class.
+- **Submission Workflow**: Submit answers directly through the portal before deadlines.
+- **Resubmission Control**: Update existing submissions prior to due dates when enabled by the teacher.
+- **Grade & Feedback Tracker**: Monitor marks scored, class rank, late submission indicators, and teacher feedback.
+
+---
+
+## 🏛️ System Architecture
 
 ```
-.
-├── backend/                # ASP.NET Core Web API
-│   ├── src/
-│   │   ├── Controllers/
-│   │   ├── Models/
-│   │   ├── DTOs/
-│   │   ├── Services/
-│   │   ├── Middleware/
-│   │   ├── Data/           # DbContext, Migrations, Seed
-│   │   └── Program.cs
-│   ├── tests/               # xUnit test project
-│   └── Dockerfile
-├── frontend/                # Next.js application
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── admin/
-│   │   │   ├── teacher/
-│   │   │   ├── student/
-│   │   │   └── login/
-│   │   ├── components/
-│   │   ├── lib/             # API client, auth context
-│   │   └── types/
-│   └── .env.local
-├── docker-compose.yml        # API + PostgreSQL
-├── .env.example
-└── README.md
+                                  +-----------------------+
+                                  |    Client Browser     |
+                                  +-----------+-----------+
+                                              |
+                                              | HTTP / JSON (Port 3000)
+                                              v
+                                  +-----------------------+
+                                  |   Next.js 16 App      |
+                                  |   (React 19 + Zod)    |
+                                  +-----------+-----------+
+                                              |
+                                              | REST API Requests (Port 8080)
+                                              v
+ +-----------------------------------------------------------------------------------+
+ |  ASP.NET Core 9 Web API Backend                                                   |
+ |                                                                                   |
+ |  +-----------------------+     +------------------------+     +-----------------+ |
+ |  | Auth / RS256 Middleware| --> |   Route Handlers  | --> | Service Layer   | |
+ |  +-----------------------+     +------------------------+     +--------+--------+ |
+ |                                                                        |          |
+ |                                                                        v          |
+ |                                                               +-----------------+ |
+ |                                                               | EF Core 8 ORM   | |
+ |                                                               +--------+--------+ |
+ +------------------------------------------------------------------------|----------+
+                                                                          |
+                                                                          v
+                                                               +---------------------+
+                                                               | PostgreSQL 17 DB    |
+                                                               +---------------------+
 ```
 
-## Prerequisites
+---
 
-- [Docker](https://docs.docker.com/engine/install/) + Docker Compose plugin
-- [Node.js](https://nodejs.org/) 18+ and npm
-- Git
+## 🛠️ Tech Stack
 
-You do **not** need PostgreSQL or .NET installed locally — the API and database run in Docker.
+| Layer                        | Technology                 | Version              | Description                                        |
+| :--------------------------- | :------------------------- | :------------------- | :------------------------------------------------- |
+| **Frontend Framework** | Next.js (App Router)       | `v16.3`            | React 19 server/client components with TypeScript  |
+| **Frontend Styling**   | Tailwind CSS               | `v4.0`             | Responsive, accessible UI styling                  |
+| **Form & Validation**  | React Hook Form & Zod      | `v7.84` / `v4.4` | Client-side schema validation and state management |
+| **API Client**         | Axios                      | `v1.19`            | HTTP request client with auth token interceptors   |
+| **Backend Framework**  | ASP.NET Core Web API       | `.NET 9.0`         | High-performance C# RESTful web service            |
+| **Data Access**        | Entity Framework Core      | `v8.0`             | Code-first ORM with automatic migration seeding    |
+| **Database**           | PostgreSQL                 | `v17-alpine`       | Relational database engine                         |
+| **Database GUI**       | pgAdmin 4                  | `latest`           | Web-based database management portal               |
+| **Security & Auth**    | JWT (RS256 RSA) + BCrypt   | `v8.22` / `v4.2` | Asymmetric token authentication & password hashing |
+| **Validation & Audit** | FluentValidation & Serilog | `v12.1`            | DTO request validation & structured error logging  |
+| **API Documentation**  | Swashbuckle / Swagger UI   | `v8.1`             | OpenAPI specification rendering                    |
+| **Testing**            | xUnit & Moq                | `v2.9` / `v4.20` | Unit, integration, and database test suites        |
+| **Containerization**   | Docker & Docker Compose    | `v2`               | Multi-container orchestration                      |
 
-## Getting Started
+---
 
-### 1. Clone the Repository
+## 📁 Project Structure
+
+```
+AssignmentManager/
+├── src/
+│   ├── backend/                        # ASP.NET Core 9 Web API
+│   │   ├── ConfigurationExtension/     # Service collection & JWT registration
+│   │   ├── Controllers/                # Admin, Auth, Teacher, Student endpoints
+│   │   ├── Data/                       # DbContext, EF Configurations & JSON Seed data
+│   │   │   └── SeedData/               # 8-step JSON seed dataset (Users, Classes, etc.)
+│   │   ├── DTOs/                       # Strongly-typed Data Transfer Objects
+│   │   ├── Handlers/                   # CQRS-style business domain request handlers
+│   │   ├── Helpers/                    # Auth, Password hashing & Seed helpers
+│   │   ├── Middlewares/                # Exception handling, Serilog, Token Revocation
+│   │   ├── Migrations/                 # EF Core database schema migrations
+│   │   ├── Models/                     # Entity models and Enums
+│   │   ├── Services/                   # Core business logic interfaces & implementations
+│   │   ├── Validators/                 # FluentValidation request rules
+│   │   ├── Dockerfile                  # Multi-stage backend build file
+│   │   ├── Backend.csproj              # .NET 9 Project dependencies
+│   │   ├── private_key.pem             # RSA Private key for JWT signing
+│   │   └── public_key.pem              # RSA Public key for JWT verification
+│   │
+│   ├── frontend/                       # Next.js 16 Application
+│   │   ├── src/
+│   │   │   ├── app/                    # Next.js App Router (admin, teacher, student, login)
+│   │   │   ├── components/             # Reusable UI components & layouts
+│   │   │   ├── lib/                    # Axios API instance & Auth Context provider
+│   │   │   └── types/                  # TypeScript interface definitions
+│   │   ├── Dockerfile                  # Multi-stage frontend container setup
+│   │   └── package.json                # Frontend dependencies & scripts
+│   │
+│   ├── Tests/                          # xUnit Automated Test Suite
+│   │   ├── ControllerTests/            # Controller HTTP status & payload tests
+│   │   ├── DatabaseTests/              # EF Core CRUD & relational constraint tests
+│   │   ├── HandlerTests/               # Business workflow & permission logic tests
+│   │   ├── ServiceTests/               # Core service unit tests
+│   │   └── Tests.csproj                # xUnit, Moq & In-Memory DB test configuration
+│   │
+│   ├── docker-compose.yml              # Container orchestration (API, Frontend, Postgres, pgAdmin)
+│   └── docker-compose.yml.override     # Local development docker settings
+├── LICENSE                             # MIT License
+└── README.md                           # Documentation
+```
+
+---
+
+## 🔑 Demo Credentials
+
+The database is pre-seeded on first boot with rich demo accounts across all three user roles:
+
+| Role              | Name                 | Email                            | Password                | Access / Scope                                    |
+| :---------------- | :------------------- | :------------------------------- | :---------------------- | :------------------------------------------------ |
+| **Admin**   | Demo Admin           | `demoadmin@gmail.com`          |`demoadminpassword`  | System-wide management & audit access             |
+| **Teacher** | Demo Teacher         | `demoteacher@gmail.com`        |`demoteacherpassword` | Manages assignments & grades for assigned classes |
+| **Student** | Demo Student         | `demostudent@gmail.com`        |`demostudentpassword` | Submits assignments & tracks class grades         |
+
+---
+
+## 🚀 Quick Start & Deployment
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (with Docker Compose v2)
+- Alternatively for manual setup: [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) and [Node.js 18+](https://nodejs.org/)
+
+---
+
+### Option A: Docker Compose Deployment (Recommended)
+
+Run the full platform (Database, API, Frontend, pgAdmin) in isolated containers with a single command:
+
+1. **Clone the Repository**:
+
+   ```bash
+   git clone https://github.com/fbanabil/Assignment-Submission-Management-System.git
+   cd Assignment-Submission-Management-System
+   ```
+2. **Launch the Container Stack**:
+   From the repository root directory, execute:
+
+   ```bash
+   docker compose -f src/docker-compose.yml up -d --build
+   ```
+3. **Verify Running Services**:
+   The containers will automatically run EF Core migrations and apply seed data:
+
+   | Service                             | Access URL                                                    | Port     |
+   | :---------------------------------- | :------------------------------------------------------------ | :------- |
+   | **Frontend Web App**          | [http://localhost:3000](http://localhost:3000)                 | `3000` |
+   | **ASP.NET Core Web API**      | [http://localhost:8080](http://localhost:8080)                 | `8080` |
+   | **Swagger API Documentation** | [http://localhost:8080/swagger](http://localhost:8080/swagger) | `8080` |
+   | **pgAdmin Web Portal**        | [http://localhost:5050](http://localhost:5050)                 | `5050` |
+   | **PostgreSQL Database**       | `localhost:5432`                                            | `5432` |
+4. **Shutdown Services**:
+
+   ```bash
+   docker compose -f src/docker-compose.yml down
+   ```
+
+---
+
+### Option B: Manual Local Development Setup
+
+If you prefer running the backend and frontend directly on your host machine:
+
+#### 1. Start Database Container
 
 ```bash
-git clone <repository-url>
-cd <repository-folder>
+cd src
+docker compose up -d postgres pgadmin
 ```
 
-### 2. Backend & Database Setup (Docker)
-
-Copy the example environment file and adjust values if needed:
+#### 2. Run ASP.NET Core Backend API
 
 ```bash
-cp .env.example .env
+cd src/backend
+dotnet restore
+dotnet ef database update
+dotnet run
 ```
 
-Start the API and PostgreSQL containers:
+The API will start at `http://localhost:8080` (or `http://localhost:5000` depending on `appsettings.json` launch profiles).
+
+#### 3. Run Next.js Frontend
 
 ```bash
-docker compose up -d --build
-```
-
-This will:
-- Start a PostgreSQL container
-- Build and start the ASP.NET Core API container
-- Apply EF Core migrations automatically on startup
-- Run the seed script, creating demo Admin, Teacher, and Student accounts
-
-The API will be available at `http://localhost:5000`.
-
-To view logs:
-
-```bash
-docker compose logs -f api
-```
-
-To stop the containers:
-
-```bash
-docker compose down
-```
-
-### 3. Frontend Setup
-
-The frontend runs locally (outside Docker) for faster development:
-
-```bash
-cd frontend
+cd src/frontend
 npm install
-```
-
-Create `frontend/.env.local`:
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-```
-
-Start the dev server:
-
-```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Environment Variables
+---
 
-See `.env.example` at the project root for the backend/Docker variables, and `frontend/.env.local` for the frontend variable. No real secrets are committed — replace placeholder values locally.
+## ⚙️ Environment Variables
 
-| Variable | Location | Description |
-|---|---|---|
-| `POSTGRES_USER` | `.env` | PostgreSQL username |
-| `POSTGRES_PASSWORD` | `.env` | PostgreSQL password |
-| `POSTGRES_DB` | `.env` | Database name |
-| `ConnectionStrings__DefaultConnection` | `.env` | Full connection string used by the API |
-| `Jwt__Key` | `.env` | Secret key used to sign JWTs |
-| `Jwt__Issuer` / `Jwt__Audience` | `.env` | JWT issuer/audience values |
-| `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | Base URL the frontend uses to call the API |
+### Docker / Backend Configuration (`src/docker-compose.yml`)
 
-## Running Tests
+| Variable                                 | Default Value                    | Description                                  |
+| :--------------------------------------- | :------------------------------- | :------------------------------------------- |
+| `POSTGRES_USER`                        | `postgres`                     | Database superuser account                   |
+| `POSTGRES_PASSWORD`                    | `mysecretpassword`             | Database superuser password                  |
+| `POSTGRES_DB`                          | `mydb`                         | Primary application database name            |
+| `ConnectionStrings__DefaultConnection` | `Host=assignment_postgres;...` | Npgsql EF Core connection string             |
+| `JwtSettings__Issuer`                  | `AssignmentManager.API`        | Token issuer domain string                   |
+| `JwtSettings__Audience`                | `AssignmentManager.UI`         | Token target audience string                 |
+| `JwtSettings__PrivateKey`              | *[RSA PEM String]*             | 2048-bit Private Key for RS256 token signing |
+| `JwtSettings__PublicKey`               | *[RSA PEM String]*             | 2048-bit Public Key for token verification   |
 
-Backend unit tests (business rules, authorization, submission workflow):
+### Frontend Configuration (`src/frontend/.env.local`)
+
+| Variable                     | Default Value                 | Description                       |
+| :--------------------------- | :---------------------------- | :-------------------------------- |
+| `NEXT_PUBLIC_API_URL`      | `http://localhost:8080/api` | Base API URL used by Axios client |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080/api` | Fallback API base URL endpoint    |
+
+---
+
+## 📡 API Documentation
+
+Once the backend service is running, interactive OpenAPI/Swagger documentation is available at `http://localhost:8080/swagger`.
+
+### Key API Endpoint Summary
+
+#### Authentication (`/api/Auth`)
+
+- `POST /api/Auth/Login` — Authenticate user and issue JWT token + HttpOnly refresh cookie.
+- `POST /api/Auth/RefreshToken` — Rotate refresh token and obtain new JWT access token.
+- `POST /api/Auth/Logout` — Revoke access token via blacklist middleware and clear cookies.
+
+#### Admin Management (`/api/Admin`)
+
+- `GET /api/Admin/Dashboard` — Get overall system analytics (counts of users, classes, assignments).
+- `POST /api/admin/users` — Onboard a new user (`Admin`, `Teacher`, `Student`).
+- `PUT /api/Admin/Users/{id}` — Modify user details and active status.
+- `DELETE /api/Admin/Users/{id}` — Remove a user record.
+- `GET / POST / PUT / DELETE /api/Admin/Classes` — Manage institutional classes.
+- `GET / POST / PUT / DELETE /api/Admin/Subjects` — Manage academic subjects.
+- `POST /api/Admin/AssignTeacher` — Map a teacher to a class and subject.
+- `POST /api/Admin/EnrollStudent` — Enroll a student into a designated class.
+
+#### Teacher Operations (`/api/Teacher`)
+
+- `GET /api/Teacher/Dashboard` — Retrieve teacher summary and active class schedules.
+- `GET / POST / PUT / DELETE /api/Teacher/Assignments` — Draft, edit, and delete assignments.
+- `POST /api/Teacher/PublishAssignment/{id}` — Publish draft assignment to enrolled students.
+- `GET /api/Teacher/Submissions` — View student submissions for teacher's assigned subjects.
+- `POST /api/Teacher/GradeSubmission` — Evaluate a submission, award marks, and provide feedback.
+
+#### Student Operations (`/api/Student`)
+
+- `GET /api/Student/Dashboard` — View pending/completed assignments and overall performance.
+- `GET /api/Student/Assignments` — List published assignments filtered by status.
+- `POST /api/Student/Submit` — Submit coursework answer text for an active assignment.
+- `PUT /api/Student/Resubmit` — Update submission content before the deadline (if allowed).
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+The repository includes a comprehensive unit and integration test suite built with **xUnit**, **Moq**, and **EF Core In-Memory / SQLite**.
+
+### Test Suite Structure
+
+- **ControllerTests**: Validates HTTP response status codes, route protections, and payload formats.
+- **DatabaseTests**: Verifies EF Core relationships, unique constraints, and CRUD operations.
+- **HandlerTests**: Tests CQRS domain workflow handlers and business validation logic.
+- **ServiceTests**: Verifies underlying business logic services in isolation using mocked dependencies.
+
+### Executing Tests
+
+To run the complete test suite:
 
 ```bash
-cd backend
-dotnet test
+cd src/Tests
+dotnet test --logger "console;verbosity=detailed"
 ```
 
-## API Documentation
+To run with code coverage report:
 
-Once the backend is running, Swagger UI is available at:
-
-```
-http://localhost:5000/swagger
+```bash
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
 ```
 
-## Demo Credentials
+---
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@example.com | _to be filled in_ |
-| Teacher | teacher@example.com | _to be filled in_ |
-| Student | student@example.com | _to be filled in_ |
+## 🔒 Security Architecture
 
+1. **RS256 Asymmetric Cryptography**:
+   - Authentication tokens are signed using standard RSA 2048-bit private keys (`private_key.pem`) and verified using matching public keys (`public_key.pem`).
+2. **HttpOnly Cookies**:
+   - Refresh tokens are delivered via Secure, HttpOnly cookies to mitigate Cross-Site Scripting (XSS) risks.
+3. **Instantaneous Token Revocation**:
+   - Logout triggers token fingerprint blacklisting via `TokenBlacklistMiddleware`, immediately rejecting subsequent calls with revoked tokens.
+4. **Input Sanitization & Schema Validation**:
+   - All API incoming request DTOs are validated using **FluentValidation** rules server-side and **Zod** client-side.
+5. **Centralized Exception Middleware**:
+   - Errors are intercepted by `GlobalExceptionHandler` to sanitize internal stack traces before returning formatted problem details to clients.
 
-## Assumptions
+---
 
-- A Student belongs to exactly one Class at a time.
-- A Subject can be taught in multiple Classes; a Teacher is assigned per Class+Subject pair.
-- "Update a submission before the deadline, if allowed" is implemented as an `AllowResubmission` flag on each Assignment, set by the Teacher.
-- Late submission is disabled by default but toggleable per assignment via `AllowLateSubmission`.
-- Draft assignments are invisible to Students; only Published assignments appear in their view.
-- Marks cannot exceed an assignment's `MaxMarks` (enforced server-side).
-- Admin has full read access system-wide and full write access to Users/Classes/Subjects/Assignments, but does not grade submissions — grading is a Teacher-only action.
-- PostgreSQL was chosen over MongoDB because the domain's entities (users, classes, subjects, assignments, submissions) have clear relational structure and foreign-key relationships.
+## 💡 Design Rationale & Domain Assumptions
 
-## Known Limitations
+- **Relational Integrity over Document Store**:
+  - PostgreSQL was selected over NoSQL databases because academic entities (Users, Classes, Subjects, Enrollments, Assignments, Submissions) rely heavily on foreign-key constraints and relational integrity.
+- **Single Active Class Enrollment**:
+  - A student belongs to one primary academic class per term/semester.
+- **Assignment Publication Lifecycle**:
+  - Assignments created in `Draft` state are hidden from students until explicitly transitioned to `Published` by the teacher.
+- **Per-Assignment Governance**:
+  - Due dates, `AllowLateSubmission`, and `AllowResubmission` toggles are enforced strictly on the backend API layer during submission calls.
+- **Grade Boundary Enforcement**:
+  - Awarded marks cannot exceed an assignment's `MaxMarks` parameter, enforced by FluentValidation and database checks.
 
-- File-upload submissions are not supported in this version; submissions are text-based.
-- No email notifications for deadlines or grading (listed as optional in the brief).
-- No pagination/advanced filtering on list views (listed as optional in the brief).
-- Not deployed to a live URL; local setup only.
+---
+
+## 📄 License
+
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more details.

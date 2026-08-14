@@ -5,6 +5,7 @@ using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Teacher;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -27,7 +28,8 @@ namespace Tests.HandlerTests.Teacher
             _handler = new TeacherClassHandler(
                 _mockUserService.Object,
                 _mockTeacherAssignmentService.Object,
-                _mockHttpContextAccessor.Object);
+                _mockHttpContextAccessor.Object,
+                Mock.Of<ILogger<TeacherClassHandler>>());
         }
 
         [Fact]

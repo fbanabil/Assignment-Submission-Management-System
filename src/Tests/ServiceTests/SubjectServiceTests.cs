@@ -3,6 +3,8 @@ using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Models.Enums;
 using AssignmentSystem.Api.Services.Services;
 using Backend.DTOs.SubjectDTOs;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Tests.Helpers;
 
 namespace Tests.ServiceTests
@@ -15,7 +17,7 @@ namespace Tests.ServiceTests
         public SubjectServiceTests()
         {
             _context = TestDbContextFactory.CreateInMemoryDbContext();
-            _service = new SubjectService(_context);
+            _service = new SubjectService(_context, Mock.Of<ILogger<SubjectService>>());
         }
 
         [Fact]

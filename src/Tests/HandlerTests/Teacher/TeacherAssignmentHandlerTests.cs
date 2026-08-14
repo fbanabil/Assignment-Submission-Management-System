@@ -6,6 +6,7 @@ using Backend.Handlers.Teacher;
 using Backend.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Teacher
@@ -18,7 +19,7 @@ namespace Tests.HandlerTests.Teacher
         public TeacherAssignmentHandlerTests()
         {
             _mockAssignmentService = new Mock<IAssignmentService>();
-            _handler = new TeacherAssignmentHandler(_mockAssignmentService.Object);
+            _handler = new TeacherAssignmentHandler(_mockAssignmentService.Object, Mock.Of<ILogger<TeacherAssignmentHandler>>());
         }
 
         [Fact]

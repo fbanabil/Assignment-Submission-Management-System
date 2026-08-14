@@ -3,6 +3,7 @@ using Backend.DTOs.AssignmentDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Admin
@@ -15,7 +16,7 @@ namespace Tests.HandlerTests.Admin
         public AssignmentHandlerTests()
         {
             _mockAssignmentService = new Mock<IAssignmentService>();
-            _handler = new AssignmentHandler(_mockAssignmentService.Object);
+            _handler = new AssignmentHandler(_mockAssignmentService.Object, Mock.Of<ILogger<AssignmentHandler>>());
         }
 
         [Fact]

@@ -5,6 +5,7 @@ using Backend.DTOs.SubjectDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Admin
@@ -17,7 +18,7 @@ namespace Tests.HandlerTests.Admin
         public SubjectHandlerTests()
         {
             _mockSubjectService = new Mock<ISubjectService>();
-            _handler = new SubjectHandler(_mockSubjectService.Object);
+            _handler = new SubjectHandler(_mockSubjectService.Object, Mock.Of<ILogger<SubjectHandler>>());
         }
 
         [Fact]

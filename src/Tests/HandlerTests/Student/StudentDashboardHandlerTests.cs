@@ -5,6 +5,7 @@ using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.StudentDTOs;
 using Backend.Handlers.Student;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Tests.Helpers;
 
@@ -21,7 +22,7 @@ namespace Tests.HandlerTests.Student
             _context = TestDbContextFactory.CreateInMemoryDbContext();
             _mockUserService = new Mock<IUserService>();
 
-            _handler = new StudentDashboardHandler(_context, _mockUserService.Object);
+            _handler = new StudentDashboardHandler(_context, _mockUserService.Object, Mock.Of<ILogger<StudentDashboardHandler>>());
         }
 
         [Fact]

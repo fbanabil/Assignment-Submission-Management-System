@@ -7,6 +7,7 @@ using Backend.DTOs.AssignmentDTOs;
 using Backend.DTOs.StudentDTOs;
 using Backend.Middlewares;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 using Tests.Helpers;
@@ -32,7 +33,7 @@ namespace Tests.ServiceTests
             _mockUserService.Setup(u => u.GetUserIdAndEmailFromClaims())
                 .ReturnsAsync((_currentTeacherId, "teacher@test.com", new List<string> { "Teacher" }));
 
-            _service = new AssignmentService(_context, _mockHttpContextAccessor.Object, _mockUserService.Object);
+            _service = new AssignmentService(_context, _mockHttpContextAccessor.Object, _mockUserService.Object, Mock.Of<ILogger<AssignmentService>>());
         }
 
         [Fact]

@@ -31,8 +31,6 @@ public class UserService : IUserService
         _authenticationHelper = authenticationHelper;
         _contextAccessor = contextAccessor;
         _tokenBlacklistRepository = tokenBlacklistRepository;
-        _contextAccessor = contextAccessor;
-        _logger = logger;
     }
 
 
@@ -41,8 +39,11 @@ public class UserService : IUserService
     /// This method retrieves all users from the database asynchronously. It uses the ToListAsync method of the DbSet to fetch all User entities and returns them as an IEnumerable<User>. This allows for efficient retrieval of user data without blocking the calling thread.
     /// </summary>
     /// <returns>An IEnumerable<User> containing all users in the database.</returns>
-    public async Task<IEnumerable<User>> GetAllUsersAsync() =>
-        await _context.Users.ToListAsync();
+    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    {
+        _logger.LogInformation("UserService: Fetching all users");
+        return await _context.Users.ToListAsync();
+    }
 
 
 
@@ -52,8 +53,11 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="id">The ID of the user to retrieve.</param>
     /// <returns>The User object if found; otherwise, null.</returns>
-    public async Task<User?> GetUserByIdAsync(Guid id) =>
-        await _context.Users.FindAsync(id);
+    public async Task<User?> GetUserByIdAsync(Guid id)
+    {
+        _logger.LogInformation("UserService: Fetching user by Id:{UserId}", id);
+        return await _context.Users.FindAsync(id);
+    }
 
 
 
@@ -67,10 +71,12 @@ public class UserService : IUserService
     /// <exception cref="Exception">Throws a general exception if an error occurs while creating the user.</exception>
     public async Task<User> CreateUserAsync(UserCreateDto dto)
     {
+        _logger.LogInformation("UserService: Creating user with Email:{Email}, Role:{Role}", dto.Email, dto.Role);
         // Check if a user with the same email already exists
         bool exists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
         if (exists)
         {
+            _logger.LogWarning("UserService: User creation failed - email {Email} already exists", dto.Email);
             throw new BadRequestException("A user with this email already exists.");
         }
 
@@ -93,6 +99,7 @@ public class UserService : IUserService
         {
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("UserService: Successfully created user Id:{UserId}", user.Id);
         }
         catch (DbUpdateException ex)
         {
@@ -113,9 +120,14 @@ public class UserService : IUserService
     /// <returns>A Task representing the asynchronous operation.</returns>
     public async Task UpdateUserAsync(Guid id, UserUpdateDto dto)
     {
+        _logger.LogInformation("UserService: Updating user Id:{UserId}", id);
         // Retrieve the user by ID
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return;
+        if (user == null)
+        {
+            _logger.LogWarning("UserService: User Id:{UserId} not found for update", id);
+            return;
+        }
         
         // Update the user's properties with the values from the DTO (if they are not null)
         if (dto.FullName != null) user.FullName = dto.FullName;
@@ -128,6 +140,7 @@ public class UserService : IUserService
 
         // Save the changes to the database
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UserService: Updated user Id:{UserId}", id);
     }
 
 
@@ -140,6 +153,7 @@ public class UserService : IUserService
     /// <returns>A Task representing the asynchronous operation.</returns>
     public async Task DeleteUserAsync(Guid id)
     {
+        _logger.LogInformation("UserService: Deleting user Id:{UserId}", id);
         // Retrieve the user by ID
         var user = await _context.Users.FindAsync(id);
         if (user != null)
@@ -147,6 +161,11 @@ public class UserService : IUserService
             // Delete the user
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("UserService: Deleted user Id:{UserId}", id);
+        }
+        else
+        {
+            _logger.LogWarning("UserService: User Id:{UserId} not found for deletion", id);
         }
     }
 
@@ -161,6 +180,7 @@ public class UserService : IUserService
     /// <returns>The authenticated User object if credentials are valid; otherwise, null.</returns>
     public async Task<User?> AuthenticateUserAsync(string email, string password)
     {
+        _logger.LogInformation("UserService: Authenticating user Email:{Email}", email);
         // Find the user by email
         User? user = _context.Users.FirstOrDefault(u => u.Email == email);
         // If the user is found, verify the password
@@ -170,8 +190,14 @@ public class UserService : IUserService
             bool isPasswordValid = await _passwordHelper.VerifyPassword(password, user.PasswordHash);
             if(isPasswordValid)
             {
+                _logger.LogInformation("UserService: User Email:{Email} authenticated successfully", email);
                 return user;
             }
+            _logger.LogWarning("UserService: Invalid password for Email:{Email}", email);
+        }
+        else
+        {
+            _logger.LogWarning("UserService: User not found for Email:{Email}", email);
         }
         return null;
     }
@@ -186,6 +212,7 @@ public class UserService : IUserService
     /// <returns>The generated JWT token as a string.</returns>
     public async Task<string> GenerateJwtToken(User user)
     {
+        _logger.LogInformation("UserService: Generating JWT token for UserId:{UserId}", user.Id);
         // Create a UserPayload object with the user's details
         UserPayload payload = new UserPayload(UserId: user.Id.ToString(), FullName: user.FullName, Email: user.Email, Roles: new List<string> { user.Role.ToString() });
 
@@ -203,6 +230,7 @@ public class UserService : IUserService
     /// <exception cref="Exception">Throws a general exception if an error occurs while creating the refresh token.</exception>
     public async Task<string> GenerateRefreshToken(User user)
     {
+        _logger.LogInformation("UserService: Generating refresh token for UserId:{UserId}", user.Id);
         // Generate a new refresh token
         string refreshToken = await _authenticationHelper.CreateRefreshTokenAsync();
         string hashedRefreshToken = await _authenticationHelper.HashTokenAsync(refreshToken);
@@ -220,6 +248,7 @@ public class UserService : IUserService
                 UserId = user.Id
             });
             await _context.SaveChangesAsync();
+            _logger.LogInformation("UserService: Created refresh token for UserId:{UserId}", user.Id);
         }
         catch (DbUpdateException ex)
         {
@@ -241,6 +270,7 @@ public class UserService : IUserService
     /// <exception cref="UnauthorizedAccessException">Thrown if the user ID from the current HTTP context does not match the user associated with the refresh token.</exception>
     public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
     {
+        _logger.LogInformation("UserService: Retrieving user by refresh token");
         // Hash the provided refresh token
         string hashedToken = await _authenticationHelper.HashTokenAsync(refreshToken);
         var token = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == hashedToken && !rt.IsUsed && rt.ExpiresAt > DateTime.UtcNow);
@@ -248,6 +278,7 @@ public class UserService : IUserService
         // If the token is not found or is invalid, return null
         if (token == null)
         {
+            _logger.LogWarning("UserService: Refresh token is invalid or expired");
             return null;
         }
 
@@ -263,6 +294,7 @@ public class UserService : IUserService
         {
             if(user == null || user.Id != userId)
             {
+                _logger.LogWarning("UserService: Refresh token user mismatch for UserId:{UserId}", userId);
                 throw new ForbiddenException("Invalid refresh token for the current user.");
             }
         }
@@ -274,6 +306,7 @@ public class UserService : IUserService
 
         // Mark the token as used and save changes
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UserService: Refresh token validated and marked as used for UserId:{UserId}", user.Id);
 
         return user;
     }

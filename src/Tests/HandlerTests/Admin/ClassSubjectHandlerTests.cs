@@ -3,6 +3,7 @@ using Backend.Controllers;
 using Backend.DTOs.ClassSubjectDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Admin
@@ -15,7 +16,7 @@ namespace Tests.HandlerTests.Admin
         public ClassSubjectHandlerTests()
         {
             _mockClassSubjectService = new Mock<IClassSubjectService>();
-            _handler = new ClassSubjectHandler(_mockClassSubjectService.Object);
+            _handler = new ClassSubjectHandler(_mockClassSubjectService.Object, Mock.Of<ILogger<ClassSubjectHandler>>());
         }
 
         [Fact]

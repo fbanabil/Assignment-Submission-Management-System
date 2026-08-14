@@ -3,6 +3,7 @@ using Backend.Handlers.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Controllers
 {
@@ -12,11 +13,13 @@ namespace Backend.Controllers
     {
         private readonly AuthHandler _authHandler;
         private readonly UserAuthHandler _userAuthHandler;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AuthHandler authHandler, UserAuthHandler userAuthHandler)
+        public AuthController(AuthHandler authHandler, UserAuthHandler userAuthHandler, ILogger<AuthController> logger)
         {
             _authHandler = authHandler;
             _userAuthHandler = userAuthHandler;
+            _logger = logger;
         }
 
 
@@ -30,7 +33,12 @@ namespace Backend.Controllers
         [HttpPost("/api/admin/users")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser([FromBody] UserCreateDto dto)
-            => await _userAuthHandler.HandleCreateUserAsync(dto);
+        {
+            _logger.LogInformation("AuthController: CreateUser requested for Email:{Email}, Role:{Role}", dto?.Email, dto?.Role);
+            var result = await _userAuthHandler.HandleCreateUserAsync(dto);
+            _logger.LogInformation("AuthController: CreateUser completed");
+            return result;
+        }
 
 
 
@@ -43,7 +51,12 @@ namespace Backend.Controllers
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
-            => await _authHandler.HandleLoginAsync(dto);
+        {
+            _logger.LogInformation("AuthController: Login requested for Email:{Email}", dto?.Email);
+            var result = await _authHandler.HandleLoginAsync(dto);
+            _logger.LogInformation("AuthController: Login completed");
+            return result;
+        }
 
 
 
@@ -55,7 +68,12 @@ namespace Backend.Controllers
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> RefreshToken()
-            => await _authHandler.HandleRefreshTokenAsync();
+        {
+            _logger.LogInformation("AuthController: RefreshToken requested");
+            var result = await _authHandler.HandleRefreshTokenAsync();
+            _logger.LogInformation("AuthController: RefreshToken completed");
+            return result;
+        }
 
 
 
@@ -67,7 +85,12 @@ namespace Backend.Controllers
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Logout()
-            => await _authHandler.HandleLogoutAsync();
+        {
+            _logger.LogInformation("AuthController: Logout requested");
+            var result = await _authHandler.HandleLogoutAsync();
+            _logger.LogInformation("AuthController: Logout completed");
+            return result;
+        }
 
 
 
@@ -80,7 +103,12 @@ namespace Backend.Controllers
         [HttpPut("/api/Admin/Users/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser([FromBody] UserUpdateDto userUpdateDto, [FromRoute] Guid id)
-            => await _userAuthHandler.HandleUpdateUserAsync(userUpdateDto, id);
+        {
+            _logger.LogInformation("AuthController: UpdateUser requested for UserId:{UserId}", id);
+            var result = await _userAuthHandler.HandleUpdateUserAsync(userUpdateDto, id);
+            _logger.LogInformation("AuthController: UpdateUser completed");
+            return result;
+        }
 
 
 
@@ -93,6 +121,11 @@ namespace Backend.Controllers
         [HttpDelete]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(Guid id)
-            => await _userAuthHandler.HandleDeleteUserAsync(id);
+        {
+            _logger.LogInformation("AuthController: DeleteUser requested for UserId:{UserId}", id);
+            var result = await _userAuthHandler.HandleDeleteUserAsync(id);
+            _logger.LogInformation("AuthController: DeleteUser completed");
+            return result;
+        }
     }
 }

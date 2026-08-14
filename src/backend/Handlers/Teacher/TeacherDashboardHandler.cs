@@ -2,6 +2,7 @@ using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.TeacherDTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -14,23 +15,27 @@ namespace Backend.Handlers.Teacher
         private readonly ISubmissionService _submissionService;
         private readonly ITeacherAssignmentService _teacherAssignmentService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<TeacherDashboardHandler> _logger;
 
         public TeacherDashboardHandler(
             IUserService userService,
             IAssignmentService assignmentService,
             ISubmissionService submissionService,
             ITeacherAssignmentService teacherAssignmentService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<TeacherDashboardHandler> logger)
         {
             _userService = userService;
             _assignmentService = assignmentService;
             _submissionService = submissionService;
             _teacherAssignmentService = teacherAssignmentService;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public async Task<IActionResult> HandleDashboardAsync(TeacherDashboardFilterDto dto, Guid teacherId)
         {
+            _logger.LogInformation("TeacherDashboardHandler: Aggregating dashboard data for TeacherId:{TeacherId}", teacherId);
             TeacherDashboardResponseDto dashboardResponseDto = new TeacherDashboardResponseDto();
             var user = _httpContextAccessor.HttpContext?.User;
 
@@ -42,6 +47,9 @@ namespace Backend.Handlers.Teacher
             dashboardResponseDto.AssignedClasses = await _teacherAssignmentService.GetAssignedClasses(teacherId);
             dashboardResponseDto.UpcomingDeadlines = await _assignmentService.GetUpcomingDeadlines(teacherId);
             dashboardResponseDto.UpcomingDeadlinesCount = dashboardResponseDto.UpcomingDeadlines.Count;
+
+            _logger.LogInformation("TeacherDashboardHandler: Aggregated dashboard for {TeacherName} - Classes:{TotalAssignedClasses}, Ungraded:{UngradedSubmissionsCount}, ActiveAssignments:{ActiveAssignmentsCount}",
+                dashboardResponseDto.TeacherName, dashboardResponseDto.TotalAssignedClasses, dashboardResponseDto.UngradedSubmissionsCount, dashboardResponseDto.ActiveAssignmentsCount);
 
             return new OkObjectResult(dashboardResponseDto);
         }

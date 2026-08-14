@@ -4,6 +4,8 @@ using AssignmentSystem.Api.Models.Enums;
 using AssignmentSystem.Api.Services.Services;
 using Backend.DTOs.StudentEnrollmentDTOs;
 using Backend.Middlewares;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Tests.Helpers;
 
 namespace Tests.ServiceTests
@@ -16,7 +18,7 @@ namespace Tests.ServiceTests
         public StudentEnrollmentServiceTests()
         {
             _context = TestDbContextFactory.CreateInMemoryDbContext();
-            _service = new StudentEnrollmentService(_context);
+            _service = new StudentEnrollmentService(_context, Mock.Of<ILogger<StudentEnrollmentService>>());
         }
 
         [Fact]

@@ -32,10 +32,14 @@ services:
       dockerfile: Dockerfile
     container_name: assignment_backend
     restart: always
+    tty: true
+    stdin_open: true
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_HTTP_PORTS=8080
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__Microsoft.AspNetCore=Information
       - ConnectionStrings__DefaultConnection=Host=assignment_postgres;Port=5432;Database=mydb;Username=postgres;Password=mysecretpassword
       - JwtSettings__Issuer=AssignmentManager.API
       - JwtSettings__Audience=AssignmentManager.UI

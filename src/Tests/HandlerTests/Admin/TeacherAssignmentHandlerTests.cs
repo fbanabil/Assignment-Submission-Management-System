@@ -5,6 +5,7 @@ using Backend.DTOs.TeacherAssignmentDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Admin
@@ -17,7 +18,7 @@ namespace Tests.HandlerTests.Admin
         public TeacherAssignmentHandlerTests()
         {
             _mockTeacherAssignmentService = new Mock<ITeacherAssignmentService>();
-            _handler = new TeacherAssignmentHandler(_mockTeacherAssignmentService.Object);
+            _handler = new TeacherAssignmentHandler(_mockTeacherAssignmentService.Object, Mock.Of<ILogger<TeacherAssignmentHandler>>());
         }
 
         [Fact]

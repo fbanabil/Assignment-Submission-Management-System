@@ -5,6 +5,7 @@ using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.HandlerTests.Auth
@@ -17,7 +18,7 @@ namespace Tests.HandlerTests.Auth
         public UserAuthHandlerTests()
         {
             _mockUserService = new Mock<IUserService>();
-            _handler = new UserAuthHandler(_mockUserService.Object);
+            _handler = new UserAuthHandler(_mockUserService.Object, Mock.Of<ILogger<UserAuthHandler>>());
         }
 
         [Fact]

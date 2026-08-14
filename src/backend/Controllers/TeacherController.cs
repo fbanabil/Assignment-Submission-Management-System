@@ -7,6 +7,7 @@ using Backend.DTOs.TeacherDTOs;
 using Backend.Handlers.Teacher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Controllers
 {
@@ -20,19 +21,22 @@ namespace Backend.Controllers
         private readonly TeacherAssignmentHandler _assignmentHandler;
         private readonly TeacherSubmissionHandler _submissionHandler;
         private readonly TeacherEnrollmentHandler _enrollmentHandler;
+        private readonly ILogger<TeacherController> _logger;
 
         public TeacherController(
             TeacherDashboardHandler dashboardHandler,
             TeacherClassHandler classHandler,
             TeacherAssignmentHandler assignmentHandler,
             TeacherSubmissionHandler submissionHandler,
-            TeacherEnrollmentHandler enrollmentHandler)
+            TeacherEnrollmentHandler enrollmentHandler,
+            ILogger<TeacherController> logger)
         {
             _dashboardHandler = dashboardHandler;
             _classHandler = classHandler;
             _assignmentHandler = assignmentHandler;
             _submissionHandler = submissionHandler;
             _enrollmentHandler = enrollmentHandler;
+            _logger = logger;
         }
 
 
@@ -43,7 +47,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Dashboard([FromQuery] TeacherDashboardFilterDto dto, [FromQuery] Guid teacherId)
-            => await _dashboardHandler.HandleDashboardAsync(dto, teacherId);
+        {
+            _logger.LogInformation("TeacherController: Dashboard requested for TeacherId:{TeacherId}", teacherId);
+            var result = await _dashboardHandler.HandleDashboardAsync(dto, teacherId);
+            _logger.LogInformation("TeacherController: Dashboard executed successfully");
+            return result;
+        }
 
 
 
@@ -53,7 +62,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Classes([FromQuery] TeacherClassFilterDto dto, [FromQuery] Guid teacherId)
-            => await _classHandler.HandleGetClassesAsync(dto, teacherId);
+        {
+            _logger.LogInformation("TeacherController: Classes requested for TeacherId:{TeacherId}", teacherId);
+            var result = await _classHandler.HandleGetClassesAsync(dto, teacherId);
+            _logger.LogInformation("TeacherController: Classes executed successfully");
+            return result;
+        }
 
 
 
@@ -63,8 +77,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Assignments([FromQuery] AssignmentFilterDto dto)
-            => await _assignmentHandler.HandleGetAssignmentsAsync(dto);
-
+        {
+            _logger.LogInformation("TeacherController: Get Assignments requested");
+            var result = await _assignmentHandler.HandleGetAssignmentsAsync(dto);
+            _logger.LogInformation("TeacherController: Get Assignments executed successfully");
+            return result;
+        }
 
 
 
@@ -74,7 +92,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> Assignments([FromBody] AssignmentCreateDto dto)
-            => await _assignmentHandler.HandleCreateAssignmentAsync(dto);
+        {
+            _logger.LogInformation("TeacherController: Create Assignment requested with Title:{Title}", dto?.Title);
+            var result = await _assignmentHandler.HandleCreateAssignmentAsync(dto);
+            _logger.LogInformation("TeacherController: Create Assignment executed successfully");
+            return result;
+        }
 
 
 
@@ -84,7 +107,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpPut("Assignments/{id}")]
         public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] AssignmentUpdateDto dto)
-            => await _assignmentHandler.HandleUpdateAssignmentAsync(id, dto);
+        {
+            _logger.LogInformation("TeacherController: Update Assignment requested for Id:{Id}", id);
+            var result = await _assignmentHandler.HandleUpdateAssignmentAsync(id, dto);
+            _logger.LogInformation("TeacherController: Update Assignment executed successfully");
+            return result;
+        }
 
 
 
@@ -94,8 +122,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Submissions([FromQuery] SubmissionFilterDto dto)
-            => await _submissionHandler.HandleGetSubmissionsAsync(dto);
-
+        {
+            _logger.LogInformation("TeacherController: Get Submissions requested");
+            var result = await _submissionHandler.HandleGetSubmissionsAsync(dto);
+            _logger.LogInformation("TeacherController: Get Submissions executed successfully");
+            return result;
+        }
 
 
 
@@ -105,7 +137,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> GradeSubmission([FromBody] GradeDto dto, [FromQuery] Guid teacherId)
-            => await _submissionHandler.HandleGradeSubmissionAsync(dto, teacherId);
+        {
+            _logger.LogInformation("TeacherController: GradeSubmission requested for SubmissionId:{SubmissionId}, TeacherId:{TeacherId}", dto?.SubmissionId, teacherId);
+            var result = await _submissionHandler.HandleGradeSubmissionAsync(dto, teacherId);
+            _logger.LogInformation("TeacherController: GradeSubmission executed successfully");
+            return result;
+        }
 
 
 
@@ -115,7 +152,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Enrollments([FromQuery] StudentEnrollmentFilterDto dto, [FromQuery] Guid teacherId)
-            => await _enrollmentHandler.HandleGetEnrollmentsAsync(dto, teacherId);
+        {
+            _logger.LogInformation("TeacherController: Get Enrollments requested for TeacherId:{TeacherId}", teacherId);
+            var result = await _enrollmentHandler.HandleGetEnrollmentsAsync(dto, teacherId);
+            _logger.LogInformation("TeacherController: Get Enrollments executed successfully");
+            return result;
+        }
 
 
 
@@ -125,7 +167,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> Enrollments([FromBody] StudentEnrollmentCreateDto dto)
-            => await _enrollmentHandler.HandleCreateEnrollmentAsync(dto);
+        {
+            _logger.LogInformation("TeacherController: Create Enrollment requested for Email:{Email}", dto?.StudentEmail);
+            var result = await _enrollmentHandler.HandleCreateEnrollmentAsync(dto);
+            _logger.LogInformation("TeacherController: Create Enrollment executed successfully");
+            return result;
+        }
 
 
 
@@ -135,7 +182,12 @@ namespace Backend.Controllers
         /// </summary>
         [HttpDelete("Enrollments/{id}")]
         public async Task<IActionResult> DeleteEnrollment(Guid id)
-            => await _enrollmentHandler.HandleDeleteEnrollmentAsync(id);
+        {
+            _logger.LogInformation("TeacherController: Delete Enrollment requested for Id:{Id}", id);
+            var result = await _enrollmentHandler.HandleDeleteEnrollmentAsync(id);
+            _logger.LogInformation("TeacherController: Delete Enrollment executed successfully");
+            return result;
+        }
     }
 }
 

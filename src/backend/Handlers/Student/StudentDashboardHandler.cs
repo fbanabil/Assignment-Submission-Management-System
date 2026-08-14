@@ -5,6 +5,7 @@ using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.StudentDTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Handlers.Student
 {
@@ -12,15 +13,18 @@ namespace Backend.Handlers.Student
     {
         private readonly AppDbContext _context;
         private readonly IUserService _userService;
+        private readonly ILogger<StudentDashboardHandler> _logger;
 
-        public StudentDashboardHandler(AppDbContext context, IUserService userService)
+        public StudentDashboardHandler(AppDbContext context, IUserService userService, ILogger<StudentDashboardHandler> logger)
         {
             _context = context;
             _userService = userService;
+            _logger = logger;
         }
 
         public async Task<IActionResult> HandleDashboardAsync(Guid? requestedStudentId)
         {
+            _logger.LogInformation("StudentDashboardHandler: Fetching dashboard data for requested StudentId:{StudentId}", requestedStudentId);
             Guid studentId = Guid.Empty;
 
             if (requestedStudentId.HasValue && requestedStudentId.Value != Guid.Empty)
@@ -42,6 +46,7 @@ namespace Backend.Handlers.Student
             var studentUser = await _context.Users.FindAsync(studentId);
             if (studentUser == null)
             {
+                _logger.LogWarning("StudentDashboardHandler: Student user not found for ID:{StudentId}", studentId);
                 return new OkObjectResult(new StudentDashboardResponseDto
                 {
                     StudentName = "Student User",
@@ -127,6 +132,9 @@ namespace Backend.Handlers.Student
             double avgGrade = gradedSubmissions.Count > 0
                 ? Math.Round(gradedSubmissions.Average(s => s.Marks!.Value), 1)
                 : 0;
+
+            _logger.LogInformation("StudentDashboardHandler: Dashboard compiled for {StudentName} - Classes:{EnrolledClassesCount}, Pending:{PendingCount}, AvgGrade:{AvgGrade}",
+                studentUser.FullName, enrolledClassesCount, pendingCount, avgGrade);
 
             var response = new StudentDashboardResponseDto
             {

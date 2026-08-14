@@ -11,6 +11,7 @@ using Backend.DTOs.TeacherAssignmentDTOs;
 using Backend.DTOs.UserDTOs;
 using Backend.Handlers.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Tests.ControllerTests
@@ -37,14 +38,14 @@ namespace Tests.ControllerTests
             _mockClassSubjectService = new Mock<IClassSubjectService>();
             _mockTeacherAssignmentService = new Mock<ITeacherAssignmentService>();
 
-            var dashboardHandler = new DashboardHandler(_mockUserService.Object, _mockAssignmentService.Object, _mockSubmissionService.Object);
-            var userHandler = new UserHandler(_mockUserService.Object);
-            var classHandler = new ClassHandler(_mockClassService.Object);
-            var subjectHandler = new SubjectHandler(_mockSubjectService.Object);
-            var classSubjectHandler = new ClassSubjectHandler(_mockClassSubjectService.Object);
-            var teacherAssignmentHandler = new TeacherAssignmentHandler(_mockTeacherAssignmentService.Object);
-            var assignmentHandler = new AssignmentHandler(_mockAssignmentService.Object);
-            var submissionHandler = new SubmissionHandler(_mockSubmissionService.Object);
+            var dashboardHandler = new DashboardHandler(_mockUserService.Object, _mockAssignmentService.Object, _mockSubmissionService.Object, Mock.Of<ILogger<DashboardHandler>>());
+            var userHandler = new UserHandler(_mockUserService.Object, Mock.Of<ILogger<UserHandler>>());
+            var classHandler = new ClassHandler(_mockClassService.Object, Mock.Of<ILogger<ClassHandler>>());
+            var subjectHandler = new SubjectHandler(_mockSubjectService.Object, Mock.Of<ILogger<SubjectHandler>>());
+            var classSubjectHandler = new ClassSubjectHandler(_mockClassSubjectService.Object, Mock.Of<ILogger<ClassSubjectHandler>>());
+            var teacherAssignmentHandler = new TeacherAssignmentHandler(_mockTeacherAssignmentService.Object, Mock.Of<ILogger<TeacherAssignmentHandler>>());
+            var assignmentHandler = new AssignmentHandler(_mockAssignmentService.Object, Mock.Of<ILogger<AssignmentHandler>>());
+            var submissionHandler = new SubmissionHandler(_mockSubmissionService.Object, Mock.Of<ILogger<SubmissionHandler>>());
 
             _controller = new AdminController(
                 dashboardHandler,
@@ -54,7 +55,8 @@ namespace Tests.ControllerTests
                 classSubjectHandler,
                 teacherAssignmentHandler,
                 assignmentHandler,
-                submissionHandler);
+                submissionHandler,
+                Mock.Of<ILogger<AdminController>>());
         }
 
         [Fact]

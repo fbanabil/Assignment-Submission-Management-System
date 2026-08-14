@@ -1,4 +1,5 @@
-﻿using AssignmentSystem.Api.Data;
+using AssignmentSystem.Api.Data;
+using Backend.Middlewares;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.ConfigurationExtension
@@ -24,6 +25,7 @@ namespace Backend.ConfigurationExtension
 
 
             app.UseExceptionHandler();
+            app.UseMiddleware<RequestLoggingMiddleware>();
 
             if (app.Environment.IsDevelopment())
             {
