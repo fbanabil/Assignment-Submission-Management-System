@@ -130,13 +130,14 @@ export function getApiUrl(path: string): string {
     return path;
   }
 
-  const baseUrl = (
-    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
-    ""
-  );
+  const envUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL;
 
-  if (!baseUrl) return path;
+  // Fallback to http://localhost:8080/api if not specified in environment
+  const baseUrl = (envUrl && envUrl.trim())
+    ? envUrl.trim().replace(/\/$/, "")
+    : "http://localhost:8080/api";
 
   let cleanPath = path.startsWith("/") ? path : `/${path}`;
 

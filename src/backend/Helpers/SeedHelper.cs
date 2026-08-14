@@ -1,4 +1,4 @@
-﻿using AssignmentSystem.Api.Data;
+using AssignmentSystem.Api.Data;
 using Backend.StartupTasks;
 using System.Text.Json;
 
@@ -42,13 +42,22 @@ namespace Backend.Helpers
 
                     if (fileNames.Count > 0)
                     {
-                        List<string> seedDataNames = fileNames.Select(f => f.Replace(".json", "").Substring(f.LastIndexOf("\\") + 1).Substring(2)).ToList();
+                        var orderedFiles = fileNames.OrderBy(f => Path.GetFileName(f)).ToList();
 
-                        for (int i = 0; i < seedDataNames.Count; i++)
+                        foreach (var jsonDataPath in orderedFiles)
                         {
-                            Type targetType = Type.GetType($"AssignmentSystem.Api.Models.Entities.{seedDataNames[i]}")!;
+                            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(jsonDataPath);
+                            string seedEntityName = System.Text.RegularExpressions.Regex.Replace(fileNameWithoutExt, @"^\d+", "");
 
-                            string jsonDataPath = fileNames[i];
+                            Type? targetType = typeof(AssignmentSystem.Api.Models.Entities.User).Assembly
+                                .GetType($"AssignmentSystem.Api.Models.Entities.{seedEntityName}");
+
+                            if (targetType == null)
+                            {
+                                targetType = AppDomain.CurrentDomain.GetAssemblies()
+                                    .Select(a => a.GetType($"AssignmentSystem.Api.Models.Entities.{seedEntityName}"))
+                                    .FirstOrDefault(t => t != null);
+                            }
 
                             if (targetType != null)
                             {
@@ -56,7 +65,7 @@ namespace Backend.Helpers
                                 var dataList = JsonSerializer.Deserialize(jsonData, typeof(List<>).MakeGenericType(targetType));
 
                                 if (dataList != null)
-                                {  
+                                {
                                     foreach (var item in (IEnumerable<object>)dataList)
                                     {
                                         bool exists = dbContext.Find(targetType, item.GetType().GetProperty("Id")?.GetValue(item)) != null;
@@ -64,8 +73,7 @@ namespace Backend.Helpers
                                         if (!exists)
                                         {
                                             // Check if item is of type User
-
-                                            if(item is AssignmentSystem.Api.Models.Entities.User userItem)
+                                            if (item is AssignmentSystem.Api.Models.Entities.User userItem)
                                             {
                                                 // get passwordhelper service
                                                 using (var passwordHelperScope = serviceProvider.CreateScope())
@@ -80,17 +88,16 @@ namespace Backend.Helpers
                                     }
 
                                     dbContext.SaveChanges();
-                                    _logger.LogInformation($"Seeded data for {seedDataNames[i]} from {jsonDataPath}");
+                                    _logger.LogInformation($"Seeded data for {seedEntityName} from {jsonDataPath}");
                                 }
                                 else
                                 {
-                                    _logger.LogWarning($"No data found in {jsonDataPath} for {seedDataNames[i]}");
+                                    _logger.LogWarning($"No data found in {jsonDataPath} for {seedEntityName}");
                                 }
                             }
                             else
                             {
-                                _logger.LogWarning($"Type not found for {seedDataNames[i]}");
-
+                                _logger.LogWarning($"Type not found for {seedEntityName} (path: {jsonDataPath})");
                             }
                         }
                     }

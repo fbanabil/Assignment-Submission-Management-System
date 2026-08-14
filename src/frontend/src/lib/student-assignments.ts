@@ -3,7 +3,7 @@ import { authenticatedFetch, parseApiResponseError, safeParseJson } from "./api-
 const rawBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
-  "http://localhost:5000";
+  "http://localhost:8080/api";
 
 export const serverOriginUrl = rawBaseUrl.replace(/\/api$/i, "");
 

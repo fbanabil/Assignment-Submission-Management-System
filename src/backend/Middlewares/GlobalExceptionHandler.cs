@@ -31,6 +31,14 @@ namespace Backend.Middlewares
 
     public class GlobalExceptionHandler : IExceptionHandler
     {
+        private readonly ILogger<GlobalExceptionHandler> _logger;
+
+        public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+        {
+            _logger = logger;
+        }
+
+
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
             var (statusCode, message) = exception switch
@@ -45,6 +53,15 @@ namespace Backend.Middlewares
 
             httpContext.Response.StatusCode = statusCode;
             httpContext.Response.ContentType = "application/json";
+
+            if (statusCode == StatusCodes.Status500InternalServerError)
+            {
+                _logger.LogError(exception, "An unexpected error occurred.");
+            }
+            else
+            {
+                _logger.LogWarning(exception, "A handled exception occurred.");
+            }
 
             var responseObj = new
             {
