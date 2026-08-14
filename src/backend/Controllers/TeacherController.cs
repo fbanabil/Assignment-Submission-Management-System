@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+using Backend.DTOs.StudentEnrollmentDTOs;
+
 namespace Backend.Controllers
 {
     [Route("api/[controller]/[action]")]
@@ -20,13 +22,20 @@ namespace Backend.Controllers
         private readonly IAssignmentService _assignmentService;
         private readonly ISubmissionService _submissionService;
         private readonly ITeacherAssignmentService _teacherAssignmentService;
+        private readonly IStudentEnrollmentService _studentEnrollmentService;
 
-        public TeacherController(IUserService userService, IAssignmentService assignmentService, ISubmissionService submissionService, ITeacherAssignmentService teacherAssignmentService)
+        public TeacherController(
+            IUserService userService,
+            IAssignmentService assignmentService,
+            ISubmissionService submissionService,
+            ITeacherAssignmentService teacherAssignmentService,
+            IStudentEnrollmentService studentEnrollmentService)
         {
             _userService = userService;
             _assignmentService = assignmentService;
             _submissionService = submissionService;
             _teacherAssignmentService = teacherAssignmentService;
+            _studentEnrollmentService = studentEnrollmentService;
         }
 
         /// <summary>
@@ -131,6 +140,42 @@ namespace Backend.Controllers
             (_, _, teacherId) = await _userService.GetTeacherNameAndEmail(User, teacherId);
             await _submissionService.GradeSubmissionAsync(dto, teacherId);
             return Ok(new { message = "Submission graded successfully." });
+        }
+
+        /// <summary>
+        /// This endpoint retrieves student enrollments for classes taught by the requesting teacher.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Enrollments([FromQuery] StudentEnrollmentFilterDto dto, [FromQuery] Guid teacherId)
+        {
+            (_, _, teacherId) = await _userService.GetTeacherNameAndEmail(User, teacherId);
+            PagedResultDto<StudentEnrollmentResponseDto> result = await _studentEnrollmentService.GetStudentEnrollmentsForTeacherAsync(teacherId, dto);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// This endpoint allows a teacher to enroll a student in a class.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> Enrollments([FromBody] StudentEnrollmentCreateDto dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest("Student enrollment data is required.");
+            }
+
+            var enrollment = await _studentEnrollmentService.CreateStudentEnrollmentAsync(dto);
+            return StatusCode(201, enrollment);
+        }
+
+        /// <summary>
+        /// This endpoint allows a teacher to remove a student enrollment.
+        /// </summary>
+        [HttpDelete("Enrollments/{id}")]
+        public async Task<IActionResult> DeleteEnrollment(Guid id)
+        {
+            await _studentEnrollmentService.DeleteStudentEnrollmentAsync(id);
+            return NoContent();
         }
     }
 }

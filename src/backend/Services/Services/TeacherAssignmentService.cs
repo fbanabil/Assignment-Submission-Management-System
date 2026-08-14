@@ -6,6 +6,7 @@ using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.TeacherAssignmentDTOs;
 using Backend.DTOs.TeacherDTOs;
 using Backend.DTOs.UserDTOs;
+using Backend.Middlewares;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 
@@ -34,12 +35,22 @@ public class TeacherAssignmentService : ITeacherAssignmentService
     {
         Guid classSubjectId = dto.ClassSubjectId;
 
+        var exists = await _context.TeacherAssignments.AnyAsync(ta => ta.TeacherId == dto.TeacherId && ta.ClassSubjectId == classSubjectId);
+
+
         if ((classSubjectId == Guid.Empty) && dto.ClassId.HasValue && dto.SubjectId.HasValue && dto.ClassId.Value != Guid.Empty && dto.SubjectId.Value != Guid.Empty)
         {
             var existingCs = await _context.ClassSubjects.FirstOrDefaultAsync(cs => cs.ClassId == dto.ClassId.Value && cs.SubjectId == dto.SubjectId.Value);
             if (existingCs != null)
             {
                 classSubjectId = existingCs.Id;
+
+                var assignmentExists = await _context.TeacherAssignments.AnyAsync(ta => ta.TeacherId == dto.TeacherId && ta.ClassSubjectId == classSubjectId);
+                if (assignmentExists)
+                {
+                    throw new BadRequestException($"This teacher assigment already exists");
+                }
+
             }
             else
             {

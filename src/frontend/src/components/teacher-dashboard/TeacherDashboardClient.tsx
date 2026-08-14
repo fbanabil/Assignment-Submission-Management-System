@@ -100,6 +100,12 @@ export function TeacherDashboardClient() {
               >
                 Submissions
               </Link>
+              <Link
+                className="rounded-full border border-black/10 bg-white px-5 py-2.5 text-foreground transition hover:border-black/20 hover:bg-black/2"
+                href="/teacher/enrollments"
+              >
+                Enrollments
+              </Link>
               <button
                 onClick={() => logoutUser()}
                 className="rounded-full border border-rose-200 bg-rose-50 px-5 py-2.5 text-rose-700 font-semibold transition hover:bg-rose-600 hover:text-white cursor-pointer"

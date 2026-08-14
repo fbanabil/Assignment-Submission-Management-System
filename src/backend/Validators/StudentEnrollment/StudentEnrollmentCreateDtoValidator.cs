@@ -7,8 +7,9 @@ public class StudentEnrollmentCreateDtoValidator : AbstractValidator<StudentEnro
 {
     public StudentEnrollmentCreateDtoValidator()
     {
-        RuleFor(x => x.StudentId)
-            .NotEqual(Guid.Empty).WithMessage("Student ID must not be empty.");
+        RuleFor(x => x.StudentEmail)
+            .NotEmpty().WithMessage("Student email is required.")
+            .EmailAddress().WithMessage("A valid student email address is required.");
 
         RuleFor(x => x.ClassId)
             .NotEqual(Guid.Empty).WithMessage("Class ID must not be empty.");

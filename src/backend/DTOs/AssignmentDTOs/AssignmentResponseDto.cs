@@ -21,9 +21,4 @@ public class AssignmentResponseDto
     public int TotalSubmissions { get; set; }
     public bool AllowLateSubmission { get; set; }
     public bool AllowResubmission { get; set; }
-
-    public static implicit operator AssignmentResponseDto(Assignment v)
-    {
-        throw new NotImplementedException();
-    }
 }

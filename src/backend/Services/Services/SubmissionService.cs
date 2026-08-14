@@ -5,20 +5,54 @@ using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Models.Enums;
 using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs;
+using Backend.DTOs.StudentDTOs;
 using Backend.DTOs.SubjectDTOs;
 using Backend.DTOs.SubmissionDTOs;
 using Backend.DTOs.UserDTOs;
+using Backend.Middlewares;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.IO;
+
+using Microsoft.AspNetCore.Hosting;
 
 public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
     private readonly IUserService _userService;
+    private readonly IWebHostEnvironment _environment;
 
-    public SubmissionService(AppDbContext context, IUserService userService)
+    public SubmissionService(AppDbContext context, IUserService userService, IWebHostEnvironment environment)
     {
         _context = context;
         _userService = userService;
+        _environment = environment;
+    }
+
+    private void DeletePhysicalFileFromWebRoot(string? fileUrl)
+    {
+        if (string.IsNullOrWhiteSpace(fileUrl) || string.IsNullOrWhiteSpace(_environment.WebRootPath)) return;
+
+        try
+        {
+            string clean = fileUrl.Replace('\\', '/');
+            if (clean.StartsWith("/")) clean = clean.Substring(1);
+            if (clean.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+            {
+                clean = clean.Substring(8);
+            }
+
+            string fullPath = Path.Combine(_environment.WebRootPath, clean);
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath);
+            }
+        }
+        catch
+        {
+            // Ignore file deletion error silently
+        }
     }
 
     public async Task<IEnumerable<Submission>> GetAllSubmissionsAsync() =>
@@ -88,8 +122,8 @@ public class SubmissionService : ISubmissionService
         }
 
 
-        if (dto.SubmissionText != null) submission.SubmissionText = dto.SubmissionText;
-        if (dto.FileUrl != null) submission.FileUrl = dto.FileUrl;
+        submission.SubmissionText = dto.SubmissionText;
+        submission.FileUrl = string.IsNullOrWhiteSpace(dto.FileUrl) ? null : dto.FileUrl;
 
         submission.LastUpdatedAt = DateTime.UtcNow;
 
@@ -252,5 +286,243 @@ public class SubmissionService : ISubmissionService
             .Include(s => s.Assignment)
             .Where(s => s.Assignment.TeacherId == teacherId && s.Status == SubmissionStatus.Submitted)
             .CountAsync();
+    }
+
+
+
+    /// <summary>
+    /// This method retrieves all submissions made by a specific student, identified by their student ID. It includes related assignment and subject information, as well as the teacher who graded the submission (if applicable).
+    /// </summary>
+    /// <param name="targetStudentId">The ID of the student whose submissions are to be retrieved.</param>
+    /// <returns>A list of Submission entities made by the specified student.</returns>
+    public async Task<List<Submission>?> GetSubmissionsForStudentAsync(Guid targetStudentId)
+    {
+        return await _context.Submissions
+                .Include(s => s.Assignment)
+                    .ThenInclude(a => a.Subject)
+                .Include(s => s.GradeGiver)
+                .Where(s => s.StudentId == targetStudentId)
+                .ToListAsync();
+    }
+
+    public async Task<Backend.DTOs.StudentDTOs.StudentSubmissionDetailDto> CreateStudentSubmissionAsync(Guid studentId, Backend.DTOs.StudentDTOs.StudentSubmissionCreateDto dto)
+    {
+        var assignment = await _context.Assignments.FindAsync(dto.AssignmentId);
+        if (assignment == null)
+        {
+            throw new Backend.Middlewares.BadRequestException("Assignment not found.");
+        }
+
+        // Deadline check
+        if (assignment.Deadline < DateTime.UtcNow && !assignment.AllowLateSubmission)
+        {
+            throw new Backend.Middlewares.BadRequestException("The deadline for this assignment has passed and late submissions are not allowed.");
+        }
+
+        var existingSubmission = await _context.Submissions
+            .Include(s => s.GradeGiver)
+            .FirstOrDefaultAsync(s => s.AssignmentId == dto.AssignmentId && s.StudentId == studentId);
+
+        if (existingSubmission != null)
+        {
+            if (!assignment.AllowResubmission)
+            {
+                throw new Backend.Middlewares.BadRequestException("You have already submitted this assignment and resubmission is disabled.");
+            }
+
+            // If old file URL existed and was removed or replaced with a new file URL, delete old file from disk
+            string? newFileUrl = string.IsNullOrWhiteSpace(dto.FileUrl) ? null : dto.FileUrl;
+            if (!string.IsNullOrWhiteSpace(existingSubmission.FileUrl) && existingSubmission.FileUrl != newFileUrl)
+            {
+                DeletePhysicalFileFromWebRoot(existingSubmission.FileUrl);
+            }
+
+            // Update existing submission
+            existingSubmission.SubmissionText = dto.SubmissionText;
+            existingSubmission.FileUrl = newFileUrl;
+            existingSubmission.SubmittedAt = DateTime.UtcNow;
+            existingSubmission.LastUpdatedAt = DateTime.UtcNow;
+            existingSubmission.Status = SubmissionStatus.Submitted;
+
+            await _context.SaveChangesAsync();
+
+            return new Backend.DTOs.StudentDTOs.StudentSubmissionDetailDto
+            {
+                SubmissionId = existingSubmission.Id,
+                SubmissionText = existingSubmission.SubmissionText,
+                FileUrl = existingSubmission.FileUrl,
+                SubmittedAt = existingSubmission.SubmittedAt,
+                Marks = existingSubmission.Marks,
+                Feedback = existingSubmission.Feedback,
+                GradedAt = existingSubmission.GradedAt,
+                GradedByTeacherName = existingSubmission.GradeGiver?.FullName
+            };
+        }
+
+        var newSubmission = new Submission
+        {
+            Id = Guid.NewGuid(),
+            AssignmentId = dto.AssignmentId,
+            StudentId = studentId,
+            SubmissionText = dto.SubmissionText,
+            FileUrl = dto.FileUrl,
+            SubmittedAt = DateTime.UtcNow,
+            LastUpdatedAt = DateTime.UtcNow,
+            Status = SubmissionStatus.Submitted
+        };
+
+        _context.Submissions.Add(newSubmission);
+        await _context.SaveChangesAsync();
+
+        return new Backend.DTOs.StudentDTOs.StudentSubmissionDetailDto
+        {
+            SubmissionId = newSubmission.Id,
+            SubmissionText = newSubmission.SubmissionText,
+            FileUrl = newSubmission.FileUrl,
+            SubmittedAt = newSubmission.SubmittedAt,
+            Marks = null,
+            Feedback = null,
+            GradedAt = null,
+            GradedByTeacherName = null
+        };
+    }
+
+    public async Task<FileUploadResponseDto> UploadAssignmentFileAsync(IFormFile file, string webRootPath)
+    {
+        if (file == null || file.Length == 0)
+        {
+            throw new BadRequestException("No file was selected or the file is empty.");
+        }
+
+        string folderPath = Path.Combine(webRootPath, "assignments");
+        if (!Directory.Exists(folderPath))
+        {
+            Directory.CreateDirectory(folderPath);
+        }
+
+        string fileExtension = Path.GetExtension(file.FileName);
+        string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+        string fullPath = Path.Combine(folderPath, uniqueFileName);
+
+        using (var stream = new FileStream(fullPath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        string relativePath = $"/assignments/{uniqueFileName}";
+
+        return new FileUploadResponseDto
+        {
+            FilePath = relativePath,
+            OriginalFileName = file.FileName,
+            FileSize = file.Length
+        };
+    }
+
+    public async Task UnsubmitAssignmentAsync(Guid studentId, Guid submissionId)
+    {
+        var submission = await _context.Submissions
+            .Include(s => s.Assignment)
+            .FirstOrDefaultAsync(s => (s.Id == submissionId || s.AssignmentId == submissionId) && (studentId == Guid.Empty || s.StudentId == studentId));
+
+        if (submission == null)
+        {
+            submission = await _context.Submissions
+                .Include(s => s.Assignment)
+                .FirstOrDefaultAsync(s => s.Id == submissionId || s.AssignmentId == submissionId);
+        }
+
+        if (submission == null)
+        {
+            throw new BadRequestException("Submission not found or does not belong to you.");
+        }
+
+        if (!submission.Assignment.AllowResubmission)
+        {
+            throw new BadRequestException("Resubmission is not enabled for this assignment.");
+        }
+
+        if (submission.Assignment.Deadline < DateTime.UtcNow && !submission.Assignment.AllowLateSubmission)
+        {
+            throw new BadRequestException("The deadline for this assignment has passed. Unsubmitting is no longer allowed.");
+        }
+
+        // Delete physical attachment file from server disk wwwroot/assignments/ if present
+        if (!string.IsNullOrWhiteSpace(submission.FileUrl))
+        {
+            DeletePhysicalFileFromWebRoot(submission.FileUrl);
+        }
+
+        _context.Submissions.Remove(submission);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<PagedResultDto<StudentSubmissionHistoryResponseDto>> GetStudentSubmissionHistoryPagedAsync(Guid studentId, StudentSubmissionHistoryFilterDto filterDto)
+    {
+        var query = _context.Submissions
+            .Include(s => s.Assignment)
+                .ThenInclude(a => a.Class)
+            .Include(s => s.Assignment)
+                .ThenInclude(a => a.Subject)
+            .Include(s => s.Assignment)
+                .ThenInclude(a => a.Teacher)
+            .Include(s => s.GradeGiver)
+            .Where(s => s.StudentId == studentId)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filterDto.SubjectName))
+        {
+            query = query.Where(s => EF.Functions.Like(s.Assignment.Subject.Name, $"%{filterDto.SubjectName}%"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterDto.Status) && !filterDto.Status.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            if (filterDto.Status.Equals("Graded", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(s => s.Status == SubmissionStatus.Graded || s.Marks.HasValue);
+            }
+            else if (filterDto.Status.Equals("Submitted", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(s => s.Status == SubmissionStatus.Submitted && !s.Marks.HasValue);
+            }
+        }
+
+        int totalCount = await query.CountAsync();
+        int pageNumber = Math.Max(1, filterDto.PageNumber);
+        int pageSize = Math.Max(1, filterDto.PageSize);
+
+        var submissions = await query
+            .OrderByDescending(s => s.SubmittedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(s => new StudentSubmissionHistoryResponseDto
+            {
+                SubmissionId = s.Id,
+                AssignmentId = s.AssignmentId,
+                AssignmentTitle = s.Assignment.Title,
+                SubjectName = s.Assignment.Subject.Name,
+                SubjectCode = s.Assignment.Subject.Code,
+                ClassName = s.Assignment.Class.Name,
+                TeacherName = s.Assignment.Teacher.FullName,
+                SubmittedAt = s.SubmittedAt,
+                FileUrl = s.FileUrl,
+                SubmissionText = s.SubmissionText,
+                Status = s.Marks.HasValue ? "Graded" : "Submitted",
+                Marks = s.Marks,
+                MaxMarks = s.Assignment.MaxMarks,
+                Feedback = s.Feedback,
+                GradedAt = s.GradedAt,
+                AllowResubmission = s.Assignment.AllowResubmission,
+                Deadline = s.Assignment.Deadline
+            })
+            .ToListAsync();
+
+        return new PagedResultDto<StudentSubmissionHistoryResponseDto>
+        {
+            Items = submissions,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 }

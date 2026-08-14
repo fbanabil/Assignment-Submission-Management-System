@@ -3,6 +3,7 @@ namespace AssignmentSystem.Api.Services.Interfaces;
 using AssignmentSystem.Api.Models.Entities;
 using Backend.DTOs;
 using Backend.DTOs.AssignmentDTOs;
+using Backend.DTOs.StudentDTOs;
 using Backend.DTOs.TeacherDTOs;
 using Backend.DTOs.UserDTOs;
 using System.Collections.Generic;
@@ -21,4 +22,6 @@ public interface IAssignmentService
     Task<int> GetActiveAssignmentsCount(Guid teacherId);
     Task<List<TeacherUpcomingDeadlineDto>> GetUpcomingDeadlines(Guid teacherId);
     Task<PagedResultDto<AssignmentResponseDto>> GetAssignmentsForTeacher(AssignmentFilterDto dto);
+    Task<PagedResultDto<StudentAssignmentResponseDto>> GetAssignmentsForStudentPagedAsync(Guid studentId, StudentAssignmentFilterDto filterDto);
+    Task<StudentAssignmentDetailDto?> GetAssignmentDetailForStudentAsync(Guid studentId, Guid assignmentId);
 }

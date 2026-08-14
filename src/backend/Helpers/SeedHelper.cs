@@ -63,6 +63,18 @@ namespace Backend.Helpers
 
                                         if (!exists)
                                         {
+                                            // Check if item is of type User
+
+                                            if(item is AssignmentSystem.Api.Models.Entities.User userItem)
+                                            {
+                                                // get passwordhelper service
+                                                using (var passwordHelperScope = serviceProvider.CreateScope())
+                                                {
+                                                    var passwordHelper = passwordHelperScope.ServiceProvider.GetRequiredService<IPasswordHelper>();
+                                                    userItem.PasswordHash = Task.Run(() => passwordHelper.HashPassword(userItem.PasswordHash)).Result;
+                                                }
+                                            }
+
                                             dbContext.Add(item);
                                         }
                                     }

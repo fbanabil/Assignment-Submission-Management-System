@@ -79,13 +79,18 @@ export async function safeParseJson<T>(response: Response, fallback?: Partial<T>
  * Builds API endpoint URLs without duplicating the `/api` prefix if it's already in base URL.
  */
 export function getApiUrl(path: string): string {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
   const baseUrl = (
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
     ""
   );
 
-  if (!baseUrl) return "";
+  if (!baseUrl) return path;
 
   let cleanPath = path.startsWith("/") ? path : `/${path}`;
 

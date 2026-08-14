@@ -44,8 +44,8 @@ export function EditAssignmentModal({
       }
       setMaxMarks(assignment.maxMarks || 100);
       setStatus(assignment.status || "Active");
-      setAllowLateSubmission(assignment.allowLateSubmission ?? true);
-      setAllowResubmission(assignment.allowResubmission ?? true);
+      setAllowLateSubmission(typeof assignment.allowLateSubmission === "boolean" ? assignment.allowLateSubmission : true);
+      setAllowResubmission(typeof assignment.allowResubmission === "boolean" ? assignment.allowResubmission : true);
     }
   }, [assignment]);
 

@@ -47,6 +47,7 @@ export function AssignmentDetailsModal({
       // 1. Fetch teacher submissions using /api/Teacher/Submissions
       const submissionsRes = await getTeacherSubmissions({
         assignmentTitle: assignment.title,
+        pageNumber: 1,
         pageSize: 100,
       });
 
@@ -55,7 +56,7 @@ export function AssignmentDetailsModal({
       // 2. Safely attempt to fetch student users (if teacher has permissions)
       let students: UserResponseDto[] = [];
       try {
-        const usersRes = await getUsers({ role: "Student", pageSize: 100 });
+        const usersRes = await getUsers({ role: "Student", pageNumber: 1, pageSize: 100 });
         students = usersRes.items || [];
       } catch {
         // Fallback: If teacher role does not have admin user access, derive student rows from submissions

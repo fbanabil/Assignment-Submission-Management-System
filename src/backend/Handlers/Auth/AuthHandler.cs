@@ -1,6 +1,7 @@
 using AssignmentSystem.Api.Models.Entities;
 using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.UserDTOs;
+using Backend.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +24,7 @@ namespace Backend.Handlers.Auth
             User? user = await _userService.AuthenticateUserAsync(dto.Email, dto.Password);
             if (user == null)
             {
-                return new UnauthorizedObjectResult(new { message = "Invalid email or password." });
+                throw new BadRequestException("Invalid email or password.");
             }
 
             // Generate JWT token and refresh token

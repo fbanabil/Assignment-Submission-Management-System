@@ -5,6 +5,9 @@ using Backend.DTOs;
 using Backend.DTOs.SubjectDTOs;
 using Backend.DTOs.SubmissionDTOs;
 using Backend.DTOs.UserDTOs;
+using Backend.DTOs.StudentDTOs;
+
+using Microsoft.AspNetCore.Http;
 
 public interface ISubmissionService
 {
@@ -16,4 +19,8 @@ public interface ISubmissionService
     Task<SubmissionSummaryDto> GetSubmissionSummaryAsync();
     Task<PagedResultDto<SubmissionResponseDto>> GetSubmissionsAsync(SubmissionFilterDto filterDto);
     Task<int> GetUngradedSubmissionsCount(Guid teacherId);
+    Task<StudentSubmissionDetailDto> CreateStudentSubmissionAsync(Guid studentId, StudentSubmissionCreateDto dto);
+    Task<FileUploadResponseDto> UploadAssignmentFileAsync(IFormFile file, string webRootPath);
+    Task UnsubmitAssignmentAsync(Guid studentId, Guid submissionId);
+    Task<PagedResultDto<StudentSubmissionHistoryResponseDto>> GetStudentSubmissionHistoryPagedAsync(Guid studentId, StudentSubmissionHistoryFilterDto filterDto);
 }

@@ -95,6 +95,8 @@ public static class AddConfigurations
         services.AddScoped<Backend.Handlers.Admin.SubmissionHandler>();
         services.AddScoped<Backend.Handlers.Auth.AuthHandler>();
         services.AddScoped<Backend.Handlers.Auth.UserAuthHandler>();
+        services.AddScoped<Backend.Handlers.Student.StudentDashboardHandler>();
+        services.AddScoped<Backend.Handlers.Student.StudentAssignmentHandler>();
 
 
 

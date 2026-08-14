@@ -6,6 +6,7 @@ using AssignmentSystem.Api.Models.Enums;
 using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs;
 using Backend.DTOs.AssignmentDTOs;
+using Backend.DTOs.StudentDTOs;
 using Backend.DTOs.TeacherDTOs;
 using Backend.DTOs.UserDTOs;
 using Microsoft.EntityFrameworkCore;
@@ -222,7 +223,8 @@ public class AssignmentService : IAssignmentService
                 MaxMarks = a.MaxMarks,
                 Status = a.Status.ToString(),
                 TotalSubmissions = _context.Submissions.Count(s => s.AssignmentId == a.Id),
-                AllowLateSubmission = a.AllowLateSubmission
+                AllowLateSubmission = a.AllowLateSubmission,
+                AllowResubmission = a.AllowResubmission
             })
             .ToListAsync()
             .ContinueWith(t =>
@@ -353,7 +355,8 @@ public class AssignmentService : IAssignmentService
             MaxMarks = a.MaxMarks,
             Status = a.Status.ToString(),
             TotalSubmissions = _context.Submissions.Count(s => s.AssignmentId == a.Id),
-            AllowLateSubmission = a.AllowLateSubmission
+            AllowLateSubmission = a.AllowLateSubmission,
+            AllowResubmission = a.AllowResubmission
         }).ToList();
 
         return new PagedResultDto<AssignmentResponseDto>
@@ -397,6 +400,176 @@ public class AssignmentService : IAssignmentService
             TotalSubmissions = await _context.Submissions.CountAsync(s => s.AssignmentId == assignment.Id),
             AllowLateSubmission = assignment.AllowLateSubmission,
             AllowResubmission = assignment.AllowResubmission
+        };
+    }
+
+
+
+    /// <summary>
+    /// This method retrieves a list of assignments for the specified class IDs. It queries the Assignments table in the database, including related Class and Subject entities, and filters the assignments based on the provided list of enrolled class IDs. The method returns a list of Assignment entities that belong to the specified classes.
+    /// </summary>
+    /// <param name="enrolledClassIds">A list of class IDs for which to retrieve assignments.</param>
+    /// <returns>A list of Assignment entities that belong to the specified classes.</returns>
+    public async Task<List<Assignment>?> GetAssignmentsForClassesAsync(List<Guid> enrolledClassIds)
+    {
+        var assignmentsQuery = _context.Assignments
+                .Include(a => a.Class)
+                .Include(a => a.Subject)
+                .Where(a => enrolledClassIds.Contains(a.ClassId));
+
+        var allAssignments = await assignmentsQuery.ToListAsync();
+
+        return allAssignments;
+    }
+
+    public async Task<PagedResultDto<StudentAssignmentResponseDto>> GetAssignmentsForStudentPagedAsync(Guid studentId, StudentAssignmentFilterDto filterDto)
+    {
+        // 1. Get class IDs the student is enrolled in
+        var enrolledClassIds = await _context.StudentEnrollments
+            .Where(se => se.StudentId == studentId)
+            .Select(se => se.ClassId)
+            .ToListAsync();
+
+        // 2. Base query for active published assignments in enrolled classes
+        var assignments = await _context.Assignments
+            .Include(a => a.Class)
+            .Include(a => a.Subject)
+            .Include(a => a.Teacher)
+            .Where(a => enrolledClassIds.Contains(a.ClassId))
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+
+        // 3. Submissions by student
+        var submissions = await _context.Submissions
+            .Where(s => s.StudentId == studentId)
+            .ToDictionaryAsync(s => s.AssignmentId);
+
+        // 4. Map & compute status
+        var resultList = new List<StudentAssignmentResponseDto>();
+
+        foreach (var a in assignments)
+        {
+            submissions.TryGetValue(a.Id, out var sub);
+            string status = "Pending";
+            if (sub != null)
+            {
+                status = sub.Marks.HasValue ? "Graded" : "Submitted";
+            }
+            else if (a.Deadline < DateTime.UtcNow)
+            {
+                status = "Overdue";
+            }
+
+            // Apply Status Filter
+            if (!string.IsNullOrWhiteSpace(filterDto.StatusFilter) && !filterDto.StatusFilter.Equals("All", StringComparison.OrdinalIgnoreCase))
+            {
+                if (filterDto.StatusFilter.Equals("Pending", StringComparison.OrdinalIgnoreCase) && status != "Pending" && status != "Overdue") continue;
+                if (filterDto.StatusFilter.Equals("Submitted", StringComparison.OrdinalIgnoreCase) && status != "Submitted") continue;
+                if (filterDto.StatusFilter.Equals("Graded", StringComparison.OrdinalIgnoreCase) && status != "Graded") continue;
+            }
+
+            // Apply Search Filter
+            if (!string.IsNullOrWhiteSpace(filterDto.Search))
+            {
+                var term = filterDto.Search.ToLower();
+                if (!a.Title.ToLower().Contains(term) && !a.Subject!.Name.ToLower().Contains(term) && !a.Class!.Name.ToLower().Contains(term))
+                {
+                    continue;
+                }
+            }
+
+            resultList.Add(new StudentAssignmentResponseDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                ClassName = a.Class?.Name ?? "Class",
+                SubjectName = a.Subject?.Name ?? "Subject",
+                SubjectCode = a.Subject?.Code ?? "SUB",
+                TeacherName = a.Teacher?.FullName ?? "Teacher",
+                Deadline = a.Deadline,
+                MaxMarks = a.MaxMarks,
+                Status = status,
+                SubmittedAt = sub?.SubmittedAt,
+                Marks = sub?.Marks,
+                Feedback = sub?.Feedback
+            });
+        }
+
+        int totalCount = resultList.Count;
+        int pageNumber = Math.Max(1, filterDto.PageNumber);
+        int pageSize = Math.Max(1, filterDto.PageSize);
+
+        var pagedItems = resultList
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new PagedResultDto<StudentAssignmentResponseDto>
+        {
+            Items = pagedItems,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<StudentAssignmentDetailDto?> GetAssignmentDetailForStudentAsync(Guid studentId, Guid assignmentId)
+    {
+        var assignment = await _context.Assignments
+            .Include(a => a.Class)
+            .Include(a => a.Subject)
+            .Include(a => a.Teacher)
+            .FirstOrDefaultAsync(a => a.Id == assignmentId);
+
+        if (assignment == null) return null;
+
+        var submission = await _context.Submissions
+            .Include(s => s.GradeGiver)
+            .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId);
+
+        string status = "Pending";
+        StudentSubmissionDetailDto? subDetail = null;
+
+        if (submission != null)
+        {
+            status = submission.Marks.HasValue ? "Graded" : "Submitted";
+            subDetail = new StudentSubmissionDetailDto
+            {
+                SubmissionId = submission.Id,
+                SubmissionText = submission.SubmissionText,
+                FileUrl = submission.FileUrl,
+                SubmittedAt = submission.SubmittedAt,
+                Marks = submission.Marks,
+                Feedback = submission.Feedback,
+                GradedAt = submission.GradedAt,
+                GradedByTeacherName = submission.GradeGiver?.FullName
+            };
+        }
+        else if (assignment.Deadline < DateTime.UtcNow)
+        {
+            status = "Overdue";
+        }
+
+        return new StudentAssignmentDetailDto
+        {
+            Id = assignment.Id,
+            Title = assignment.Title,
+            Description = assignment.Description,
+            ClassId = assignment.ClassId,
+            ClassName = assignment.Class?.Name ?? "",
+            ClassSection = assignment.Class?.Section ?? "",
+            SubjectId = assignment.SubjectId,
+            SubjectName = assignment.Subject?.Name ?? "",
+            SubjectCode = assignment.Subject?.Code ?? "",
+            TeacherName = assignment.Teacher?.FullName ?? "",
+            TeacherEmail = assignment.Teacher?.Email ?? "",
+            Deadline = assignment.Deadline,
+            MaxMarks = assignment.MaxMarks,
+            AllowLateSubmission = assignment.AllowLateSubmission,
+            AllowResubmission = assignment.AllowResubmission,
+            Status = status,
+            ExistingSubmission = subDetail
         };
     }
 }
