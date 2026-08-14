@@ -7,6 +7,7 @@ export type UserResponseDto = {
   fullName: string;
   email: string;
   phoneNumber: string;
+  rollNo?: string;
   role: UserRole;
   isActive: boolean;
   createdAt: string;
@@ -18,6 +19,7 @@ export type UserCreateDto = {
   phoneNumber: string;
   password: string;
   confirmPassword: string;
+  rollNo?: string;
   role: UserRole;
 };
 
@@ -33,6 +35,7 @@ export type UserUpdateDto = {
   fullName?: string;
   email?: string;
   phoneNumber?: string;
+  rollNo?: string;
   role?: UserRole;
   isActive?: boolean;
 };
@@ -41,8 +44,11 @@ export type UserFilterDto = {
   name?: string;
   email?: string;
   phoneNumber?: string;
+  rollNo?: string;
   role?: UserRole | "";
   isActive?: boolean | "" | "true" | "false";
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -79,10 +85,13 @@ export async function getUsers(filter: UserFilterDto): Promise<PagedUserResultDt
   if (filter.name) query.set("name", filter.name);
   if (filter.email) query.set("email", filter.email);
   if (filter.phoneNumber) query.set("phoneNumber", filter.phoneNumber);
+  if (filter.rollNo) query.set("rollNo", filter.rollNo);
   if (filter.role) query.set("role", filter.role);
   if (filter.isActive !== undefined && filter.isActive !== "") {
     query.set("isActive", String(filter.isActive));
   }
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(pageNumber));
   query.set("pageSize", String(pageSize));
 

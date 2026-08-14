@@ -34,5 +34,14 @@ public class UserUpdateDtoValidator : AbstractValidator<UserUpdateDto>
 
         RuleFor(x => x.Id)
             .Must(id => Guid.TryParse(id.ToString(), out _)).WithMessage("Id must be a valid GUID.");
+
+        RuleFor(x => x.RollNo)
+            .MaximumLength(50).WithMessage("Roll number must not exceed 50 characters.")
+            .When(x => !string.IsNullOrEmpty(x.RollNo));
+
+        RuleFor(x => x.RollNo)
+            .Must((dto, rollNo) => string.IsNullOrWhiteSpace(rollNo))
+            .WithMessage("Roll number can only be assigned to Student accounts.")
+            .When(x => x.Role.HasValue && x.Role.Value != UserRole.Student);
     }
 }

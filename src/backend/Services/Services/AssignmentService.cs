@@ -13,6 +13,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Security.Claims;
 
+using Backend.Middlewares;
+
 public class AssignmentService : IAssignmentService
 {
     private readonly AppDbContext _context;
@@ -82,13 +84,13 @@ public class AssignmentService : IAssignmentService
     public async Task<AssignmentResponseDto> UpdateAssignmentAsync(Guid id, AssignmentUpdateDto dto)
     {
         var assignment = await _context.Assignments.FindAsync(id);
-        if (assignment == null) throw new KeyNotFoundException($"Assignment with ID {id} not found.");
+        if (assignment == null) throw new NotFoundException($"Assignment with ID {id} not found.");
 
         var userClaims = await _userService.GetUserIdAndEmailFromClaims();
 
         if(assignment.TeacherId != userClaims.UserId)
         {
-            throw new UnauthorizedAccessException("You are not authorized to update this assignment.");
+            throw new ForbiddenException("You are not authorized to update this assignment.");
         }
 
 
@@ -124,8 +126,9 @@ public class AssignmentService : IAssignmentService
 
         if(assignment != null && assignment.TeacherId != userClaims.UserId)
         {
-            throw new UnauthorizedAccessException("You are not authorized to delete this assignment.");
+            throw new ForbiddenException("You are not authorized to delete this assignment.");
         }
+
 
         if (assignment != null)
         {
@@ -202,8 +205,21 @@ public class AssignmentService : IAssignmentService
             }
         }
 
+        bool isDesc = filterDto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy = filterDto.SortBy?.ToLower().Trim() ?? "duedate";
+
+        query = sortBy switch
+        {
+            "title" => isDesc ? query.OrderByDescending(a => a.Title) : query.OrderBy(a => a.Title),
+            "classname" => isDesc ? query.OrderByDescending(a => a.Class.Name) : query.OrderBy(a => a.Class.Name),
+            "subjectname" => isDesc ? query.OrderByDescending(a => a.Subject.Name) : query.OrderBy(a => a.Subject.Name),
+            "teachername" => isDesc ? query.OrderByDescending(a => a.Teacher.FullName) : query.OrderBy(a => a.Teacher.FullName),
+            "status" => isDesc ? query.OrderByDescending(a => a.Status) : query.OrderBy(a => a.Status),
+            "createdat" => isDesc ? query.OrderByDescending(a => a.CreatedAt) : query.OrderBy(a => a.CreatedAt),
+            _ => isDesc ? query.OrderByDescending(a => a.Deadline) : query.OrderBy(a => a.Deadline)
+        };
+
         return await query
-            .OrderBy(a => a.Deadline)
             .Skip((filterDto.PageNumber - 1) * filterDto.PageSize)
             .Take(filterDto.PageSize)
             .Select(a => new AssignmentResponseDto
@@ -301,7 +317,7 @@ public class AssignmentService : IAssignmentService
     /// <exception cref="UnauthorizedAccessException">Thrown when the user ID claim is not found in the HTTP context.</exception>
     public async Task<PagedResultDto<AssignmentResponseDto>> GetAssignmentsForTeacher(AssignmentFilterDto dto)
     {
-        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID claim not found.");
+        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedException("User ID claim not found.");
         var userRoles = _httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>(); 
         var query = _context.Assignments
             .Include(a => a.Class)
@@ -332,6 +348,21 @@ public class AssignmentService : IAssignmentService
                 query = query.Where(a => a.Status == status);
             }
         }
+
+        bool isDesc = dto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy = dto.SortBy?.ToLower().Trim() ?? "duedate";
+
+        query = sortBy switch
+        {
+            "title" => isDesc ? query.OrderByDescending(a => a.Title) : query.OrderBy(a => a.Title),
+            "classname" => isDesc ? query.OrderByDescending(a => a.Class.Name) : query.OrderBy(a => a.Class.Name),
+            "subjectname" => isDesc ? query.OrderByDescending(a => a.Subject.Name) : query.OrderBy(a => a.Subject.Name),
+            "teachername" => isDesc ? query.OrderByDescending(a => a.Teacher.FullName) : query.OrderBy(a => a.Teacher.FullName),
+            "status" => isDesc ? query.OrderByDescending(a => a.Status) : query.OrderBy(a => a.Status),
+            "createdat" => isDesc ? query.OrderByDescending(a => a.CreatedAt) : query.OrderBy(a => a.CreatedAt),
+            _ => isDesc ? query.OrderByDescending(a => a.Deadline) : query.OrderBy(a => a.Deadline)
+        };
+
         var totalCount = await query.CountAsync();
         var assignments = await query
             .Skip((dto.PageNumber - 1) * dto.PageSize)
@@ -424,13 +455,13 @@ public class AssignmentService : IAssignmentService
 
     public async Task<PagedResultDto<StudentAssignmentResponseDto>> GetAssignmentsForStudentPagedAsync(Guid studentId, StudentAssignmentFilterDto filterDto)
     {
-        // 1. Get class IDs the student is enrolled in
+        // Get class IDs the student is enrolled in
         var enrolledClassIds = await _context.StudentEnrollments
             .Where(se => se.StudentId == studentId)
             .Select(se => se.ClassId)
             .ToListAsync();
 
-        // 2. Base query for active published assignments in enrolled classes
+        // Base query for active published assignments in enrolled classes
         var assignments = await _context.Assignments
             .Include(a => a.Class)
             .Include(a => a.Subject)
@@ -439,12 +470,12 @@ public class AssignmentService : IAssignmentService
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
 
-        // 3. Submissions by student
+        // Submissions by student
         var submissions = await _context.Submissions
             .Where(s => s.StudentId == studentId)
             .ToDictionaryAsync(s => s.AssignmentId);
 
-        // 4. Map & compute status
+        // Map & compute status
         var resultList = new List<StudentAssignmentResponseDto>();
 
         foreach (var a in assignments)

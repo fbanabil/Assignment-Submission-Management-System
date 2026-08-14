@@ -11,6 +11,7 @@ import {
   type ClassResponseDto,
   type PagedClassResultDto,
 } from "@/lib/admin-classes";
+import { logoutUser } from "@/lib/auth";
 
 function formatDateTime(value: string) {
   const date = new Date(value);
@@ -26,6 +27,8 @@ export function ClassManagementClient() {
     name: "",
     section: "",
     academicYear: "",
+    sortBy: "name",
+    sortOrder: "Asc",
     pageNumber: 1,
     pageSize: 10,
   });
@@ -164,51 +167,89 @@ export function ClassManagementClient() {
           </div>
         )}
 
-        {/* Header section styled like admin-dashboard */}
+        {/* Header section styled matching admin dashboard */}
         <header className="overflow-hidden rounded-4xl border border-white/70 bg-(--color-surface) px-6 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:px-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/15 bg-teal-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
+                <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse"></span>
                 Class Management
               </div>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                   Classes & Sections Directory
                 </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-(--color-muted) sm:text-base">
-                  Manage academic classes, sections, and academic year assignments across your institution.
+                <p className="mt-2 text-sm leading-7 text-(--color-muted) sm:text-base">
+                  Manage academic classes, section allocations, and academic year settings across your institution.
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <button
-                type="button"
-                onClick={() => setIsCreateModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background shadow-md transition hover:opacity-90 active:scale-98 cursor-pointer"
-              >
-                <span className="text-base font-bold">+</span> Create Class
-              </button>
-              <Link
-                className="rounded-full border border-black/10 bg-white px-4 py-2.5 font-medium text-foreground shadow-sm transition hover:border-black/20 hover:bg-black/2"
-                href="/admin"
-              >
-                Back to dashboard
-              </Link>
+            {/* Refreshed info */}
+            <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500 shrink-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white px-3.5 py-1.5 font-medium text-foreground shadow-2xs">
+                Refreshed: <strong className="text-foreground">{pagedData?.fetchedAt ? formatDateTime(pagedData.fetchedAt) : "Just now"}</strong>
+              </span>
             </div>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between border-t border-black/5 pt-4 text-xs font-medium text-slate-500 gap-2">
-            <span>
-              Source: <strong className="text-foreground">{pagedData?.dataSource || "Server API"}</strong>
-            </span>
-            <span>
-              Refreshed:{" "}
-              <strong className="text-foreground">
-                {pagedData?.fetchedAt ? formatDateTime(pagedData.fetchedAt) : "Just now"}
-              </strong>
-            </span>
-          </div>
+          <nav className="mt-6 flex flex-wrap items-center gap-1.5 sm:gap-2 border-t border-black/5 pt-5 text-xs sm:text-sm font-medium shrink-0">
+            <Link
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+              href="/admin"
+            >
+              Dashboard
+            </Link>
+            <Link
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+              href="/admin/users"
+            >
+              User Management
+            </Link>
+            <Link
+              className="rounded-full bg-slate-900 px-4 py-2 text-white shadow-md transition hover:bg-slate-800 whitespace-nowrap"
+              href="/admin/classes"
+            >
+              Class Management
+            </Link>
+            <Link
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+              href="/admin/subjects"
+            >
+              Subject Management
+            </Link>
+            <Link
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+              href="/admin/teacher-assignments"
+            >
+              Teacher Assignments
+            </Link>
+            <Link
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+              href="/admin/assignments"
+            >
+              All Assignments
+            </Link>
+            <Link
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+              href="/admin/submissions"
+            >
+              All Submissions
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-teal-700 active:scale-98 cursor-pointer whitespace-nowrap"
+            >
+              + Create Class
+            </button>
+            <button
+              onClick={() => logoutUser()}
+              className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 font-semibold transition hover:bg-rose-600 hover:text-white cursor-pointer whitespace-nowrap"
+            >
+              Logout 🚪
+            </button>
+          </nav>
         </header>
 
         {/* Dynamic Filter Bar (Filtering using Name, Section, Academic Year) */}
@@ -225,7 +266,7 @@ export function ClassManagementClient() {
             </div>
 
             {/* Field Filters Grid */}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {/* Name filter */}
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Class Name</label>
@@ -260,6 +301,35 @@ export function ClassManagementClient() {
                   onChange={handleInputChange("academicYear")}
                   className="w-full rounded-2xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm font-medium text-foreground placeholder:text-slate-400 focus:border-teal-500 focus:outline-none transition shadow-2xs"
                 />
+              </div>
+
+              {/* Sort By selector */}
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Sort By</label>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={filter.sortBy || "name"}
+                    onChange={(e) => {
+                      setFilter((prev) => ({ ...prev, sortBy: e.target.value, pageNumber: 1 }));
+                    }}
+                    className="w-full rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 text-sm font-medium text-foreground focus:border-teal-500 focus:outline-none transition shadow-2xs"
+                  >
+                    <option value="name">Class Name</option>
+                    <option value="section">Section</option>
+                    <option value="academicyear">Academic Year</option>
+                    <option value="createdat">Created Date</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter((prev) => ({ ...prev, sortOrder: prev.sortOrder === "Asc" ? "Desc" : "Asc", pageNumber: 1 }));
+                    }}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-100 transition cursor-pointer"
+                    title={`Sort Order: ${filter.sortOrder === "Asc" ? "Ascending" : "Descending"}`}
+                  >
+                    {filter.sortOrder === "Asc" ? "⬆️" : "⬇️"}
+                  </button>
+                </div>
               </div>
 
               {/* Page size selector */}

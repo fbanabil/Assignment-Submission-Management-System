@@ -13,6 +13,20 @@ namespace Backend.Middlewares
         public BadRequestException(string message) : base(message) { }
     }
 
+    public class UnauthorizedException : Exception
+    {
+        public UnauthorizedException(string message) : base(message) { }
+    }
+
+    public class ForbiddenException : Exception
+    {
+        public ForbiddenException(string message) : base(message) { }
+    }
+
+    public class InternalServerErrorException : Exception
+    {
+        public InternalServerErrorException(string message) : base(message) { }
+    }
 
 
     public class GlobalExceptionHandler : IExceptionHandler
@@ -23,6 +37,9 @@ namespace Backend.Middlewares
             {
                 NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
                 BadRequestException => (StatusCodes.Status400BadRequest, exception.Message),
+                UnauthorizedException => (StatusCodes.Status401Unauthorized, exception.Message),
+                ForbiddenException => (StatusCodes.Status403Forbidden, exception.Message),
+                InternalServerErrorException => (StatusCodes.Status500InternalServerError, exception.Message),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
             };
 

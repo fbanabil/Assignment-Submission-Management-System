@@ -8,16 +8,16 @@ import {
 } from "@/lib/admin-submissions";
 import { getTeacherSubmissions } from "@/lib/teacher-assignments";
 import { logoutUser } from "@/lib/auth";
+import { formatDisplayError } from "@/lib/api-error";
 import { GradeSubmissionModal } from "./GradeSubmissionModal";
 
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "N/A";
+function formatDateParts(dateStr?: string) {
+  if (!dateStr) return { date: "N/A", time: "" };
   const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return dateStr;
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
+  if (Number.isNaN(d.getTime())) return { date: dateStr, time: "" };
+  const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(d);
+  const time = new Intl.DateTimeFormat("en-US", { timeStyle: "short" }).format(d);
+  return { date, time };
 }
 
 export function TeacherSubmissionsManagementClient() {
@@ -33,6 +33,8 @@ export function TeacherSubmissionsManagementClient() {
   const [subjectFilter, setSubjectFilter] = useState("");
   const [studentNameFilter, setStudentNameFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [sortBy, setSortBy] = useState("submittedat");
+  const [sortOrder, setSortOrder] = useState<"Asc" | "Desc">("Desc");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +52,8 @@ export function TeacherSubmissionsManagementClient() {
         subjectCode: subjectFilter.trim() || undefined,
         studentName: studentNameFilter.trim() || undefined,
         status: statusFilter.trim() || undefined,
+        sortBy,
+        sortOrder,
         pageNumber,
         pageSize,
       });
@@ -58,11 +62,11 @@ export function TeacherSubmissionsManagementClient() {
       setTotalPages(res.totalPages || 1);
     } catch (err) {
       console.error("Failed to load submissions:", err);
-      setError("Failed to load student submissions list.");
+      setError(formatDisplayError(err, "Failed to load student submissions list."));
     } finally {
       setLoading(false);
     }
-  }, [assignmentTitleFilter, classFilter, subjectFilter, studentNameFilter, statusFilter, pageNumber, pageSize]);
+  }, [assignmentTitleFilter, classFilter, subjectFilter, studentNameFilter, statusFilter, sortBy, sortOrder, pageNumber, pageSize]);
 
   useEffect(() => {
     fetchSubmissions();
@@ -74,6 +78,8 @@ export function TeacherSubmissionsManagementClient() {
     setSubjectFilter("");
     setStudentNameFilter("");
     setStatusFilter("");
+    setSortBy("submittedat");
+    setSortOrder("Desc");
     setPageNumber(1);
   };
 
@@ -81,41 +87,63 @@ export function TeacherSubmissionsManagementClient() {
   const pendingCount = items.filter((i) => i.status === "Submitted").length;
 
   return (
-    <main className="min-h-screen bg-(--color-background) px-4 py-8 sm:px-8 font-sans">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         {/* Header & Navigation */}
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-black/5 pb-6">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-teal-500/15 bg-teal-500/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
-              Teacher Portal
-            </span>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-              Student Submissions Management
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Review submitted assignments, grade coursework, and provide feedback to students.
-            </p>
-          </div>
+        <header className="overflow-hidden rounded-4xl border border-white/70 bg-(--color-surface) px-6 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/15 bg-teal-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
+                Teacher Portal
+              </div>
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                  Student Submissions Management
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-(--color-muted) sm:text-base">
+                  Review submitted assignments, grade coursework, and provide feedback to students.
+                </p>
+              </div>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/teacher"
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
-            >
-              ← Dashboard
-            </Link>
-            <Link
-              href="/teacher/assignments"
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
-            >
-              Assignments 📚
-            </Link>
-            <button
-              onClick={() => logoutUser()}
-              className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-600 hover:text-white transition cursor-pointer"
-            >
-              Sign Out
-            </button>
+            <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium shrink-0">
+              <Link
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+                href="/teacher"
+              >
+                Dashboard
+              </Link>
+              <Link
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+                href="/teacher/classes"
+              >
+                My Classes
+              </Link>
+              <Link
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+                href="/teacher/assignments"
+              >
+                Assignments
+              </Link>
+              <Link
+                className="rounded-full bg-slate-900 px-4 py-2 text-white shadow-md transition hover:bg-slate-800 whitespace-nowrap"
+                href="/teacher/submissions"
+              >
+                Submissions
+              </Link>
+              <Link
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+                href="/teacher/enrollments"
+              >
+                Enrollments
+              </Link>
+              <button
+                onClick={() => logoutUser()}
+                className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 font-semibold transition hover:bg-rose-600 hover:text-white cursor-pointer whitespace-nowrap"
+              >
+                Logout 🚪
+              </button>
+            </nav>
           </div>
         </header>
 
@@ -230,6 +258,40 @@ export function TeacherSubmissionsManagementClient() {
                 <option value="Graded">Graded</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Sort By
+              </label>
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPageNumber(1);
+                  }}
+                  className="w-full rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 text-sm font-medium text-slate-900 focus:border-teal-500 focus:outline-none"
+                >
+                  <option value="submittedat">Submitted Date</option>
+                  <option value="studentname">Student Name</option>
+                  <option value="assignmenttitle">Assignment Title</option>
+                  <option value="classname">Class Name</option>
+                  <option value="status">Status</option>
+                  <option value="marks">Grade / Score</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSortOrder((prev) => (prev === "Asc" ? "Desc" : "Asc"));
+                    setPageNumber(1);
+                  }}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-100 transition cursor-pointer"
+                  title={`Sort Order: ${sortOrder === "Asc" ? "Ascending" : "Descending"}`}
+                >
+                  {sortOrder === "Asc" ? "⬆️" : "⬇️"}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-3 text-xs">
@@ -286,8 +348,15 @@ export function TeacherSubmissionsManagementClient() {
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/60 transition">
                         <td className="px-6 py-4">
-                          <div className="font-semibold text-slate-900">{item.studentName}</div>
-                          <div className="text-xs text-slate-500">{item.studentEmail}</div>
+                          <div className="flex flex-col">
+                            <div className="font-semibold text-slate-900 leading-tight">{item.studentName}</div>
+                            {item.studentRollNo && (
+                              <span className="inline-flex w-fit items-center rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[11px] font-mono font-bold text-purple-700 mt-1">
+                                Roll: {item.studentRollNo}
+                              </span>
+                            )}
+                            <div className="text-xs text-slate-500 mt-1">{item.studentEmail}</div>
+                          </div>
                         </td>
 
                         <td className="px-6 py-4 max-w-xs">
@@ -297,27 +366,37 @@ export function TeacherSubmissionsManagementClient() {
                           </div>
                         </td>
 
-                        <td className="px-6 py-4 text-xs text-slate-600 font-medium">
-                          {formatDate(item.submittedAt)}
+                        <td className="px-6 py-4 text-xs font-medium">
+                          {(() => {
+                            const parts = formatDateParts(item.submittedAt);
+                            return (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-semibold text-slate-800 text-xs">{parts.date}</span>
+                                {parts.time && (
+                                  <span className="text-[11px] font-mono text-slate-500">{parts.time}</span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         <td className="px-6 py-4">
                           {fileUrl ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col gap-1 items-start min-w-[115px]">
                               <a
                                 href={fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 rounded-full border border-teal-600 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-600 hover:text-white transition"
+                                className="w-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-teal-600 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-600 hover:text-white transition"
                               >
-                                👁️ View File
+                                👁️ Open File
                               </a>
                               <a
                                 href={fileUrl}
                                 download
-                                className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 transition"
+                                className="w-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-900 hover:text-white transition"
                               >
-                                ⬇️
+                                ⬇️ Download
                               </a>
                             </div>
                           ) : (
@@ -327,11 +406,15 @@ export function TeacherSubmissionsManagementClient() {
 
                         <td className="px-6 py-4">
                           {item.grade !== undefined && item.grade !== null ? (
-                            <span className="font-semibold text-slate-900 text-xs">
-                              {item.grade} / {item.maxMarks}
-                            </span>
+                            <div className="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-xs shadow-2xs">
+                              <span className="text-emerald-700 font-medium">Grade:</span>
+                              <span className="font-mono font-bold text-emerald-900 text-xs">{item.grade}</span>
+                              <span className="text-emerald-700 font-medium">/ {item.maxMarks}</span>
+                            </div>
                           ) : (
-                            <span className="text-xs text-slate-400 font-mono">— / {item.maxMarks}</span>
+                            <div className="inline-flex items-center gap-1 rounded-xl border border-amber-200/80 bg-amber-50/70 px-2.5 py-1 text-xs font-medium text-amber-800 shadow-2xs">
+                              <span>⏳ Ungraded ({item.maxMarks} max)</span>
+                            </div>
                           )}
                         </td>
 
@@ -347,7 +430,7 @@ export function TeacherSubmissionsManagementClient() {
                           </span>
                         </td>
 
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
                           <button
                             onClick={() => setGradingSubmission(item)}
                             className="rounded-full bg-teal-600 px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-teal-700 transition cursor-pointer"

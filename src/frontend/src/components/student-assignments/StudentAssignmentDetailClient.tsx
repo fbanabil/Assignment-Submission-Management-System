@@ -10,6 +10,7 @@ import {
   uploadAssignmentFile,
   type StudentAssignmentDetailDto,
 } from "@/lib/student-assignments";
+import { formatDisplayError } from "@/lib/api-error";
 
 type StudentAssignmentDetailClientProps = {
   id: string;
@@ -97,7 +98,7 @@ export function StudentAssignmentDetailClient({ id }: StudentAssignmentDetailCli
       }
     } catch (err) {
       console.error("Failed to load assignment detail:", err);
-      setError(err instanceof Error ? err.message : "Unable to load assignment details.");
+      setError(formatDisplayError(err, "Unable to load assignment details."));
     } finally {
       setLoading(false);
     }
@@ -118,7 +119,7 @@ export function StudentAssignmentDetailClient({ id }: StudentAssignmentDetailCli
       const uploadRes = await uploadAssignmentFile(file);
       setFileUrl(uploadRes.filePath);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload attachment file.");
+      setError(formatDisplayError(err, "Failed to upload attachment file."));
     } finally {
       setUploadingFile(false);
     }
@@ -150,7 +151,7 @@ export function StudentAssignmentDetailClient({ id }: StudentAssignmentDetailCli
       setSubmitSuccessMessage("Your work has been submitted successfully!");
       fetchDetail();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit assignment.");
+      setError(formatDisplayError(err, "Failed to submit assignment."));
     } finally {
       setSubmitting(false);
     }
@@ -175,7 +176,7 @@ export function StudentAssignmentDetailClient({ id }: StudentAssignmentDetailCli
       setSubmitSuccessMessage("Submission unsubmitted successfully. You can now edit your work and turn it in again.");
       fetchDetail();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to unsubmit assignment.");
+      setError(formatDisplayError(err, "Failed to unsubmit assignment."));
     } finally {
       setUnsubmitting(false);
     }
@@ -443,7 +444,7 @@ export function StudentAssignmentDetailClient({ id }: StudentAssignmentDetailCli
                           rel="noopener noreferrer"
                           className="truncate font-semibold text-indigo-700 underline hover:text-indigo-900"
                         >
-                          {fileUrl}
+                          {fileUrl.split("/").pop() || "Attachment"}
                         </a>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">

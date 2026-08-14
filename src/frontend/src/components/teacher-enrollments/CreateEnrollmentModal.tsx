@@ -34,9 +34,21 @@ export function CreateEnrollmentModal({ isOpen, onClose, onSuccess }: CreateEnro
     setLoadingData(true);
     setError(null);
     try {
-      // Load teacher assigned classes
+      // Load teacher assigned classes and deduplicate by classId
       const classesData = await getTeacherClasses({ pageNumber: 1, pageSize: 100 });
-      setClasses(classesData.items || []);
+      const rawClasses = classesData.items || [];
+      const uniqueClasses: TeacherAssignedClassSubjectDto[] = [];
+      const seenClassIds = new Set<string>();
+
+      for (const cls of rawClasses) {
+        const idKey = cls.classId || cls.classSubjectId;
+        if (idKey && !seenClassIds.has(idKey)) {
+          seenClassIds.add(idKey);
+          uniqueClasses.push(cls);
+        }
+      }
+
+      setClasses(uniqueClasses);
 
       // Load registered student users
       const usersData = await getUsers({ role: "Student", pageNumber: 1, pageSize: 100 });
@@ -136,8 +148,8 @@ export function CreateEnrollmentModal({ isOpen, onClose, onSuccess }: CreateEnro
               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
             >
               <option value="">-- Choose Class --</option>
-              {classes.map((c) => (
-                <option key={c.classId || c.classSubjectId} value={c.classId || c.classSubjectId}>
+              {classes.map((c, idx) => (
+                <option key={c.classSubjectId || `${c.classId}-${idx}`} value={c.classId || c.classSubjectId}>
                   {c.className} {c.classSection ? `(Sec ${c.classSection})` : ""} - {c.academicYear || "Current"}
                 </option>
               ))}
@@ -160,7 +172,7 @@ export function CreateEnrollmentModal({ isOpen, onClose, onSuccess }: CreateEnro
                   <option value="">-- Select Registered Student --</option>
                   {students.map((s) => (
                     <option key={s.id} value={s.email}>
-                      {s.fullName} ({s.email})
+                      {s.fullName} {s.rollNo ? `(Roll: ${s.rollNo})` : ""} - {s.email}
                     </option>
                   ))}
                 </select>

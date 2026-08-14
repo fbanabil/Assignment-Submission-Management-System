@@ -30,6 +30,7 @@ export function EditUserModal({ isOpen, user, onClose, onSuccess }: EditUserModa
         fullName: user.fullName,
         email: user.email,
         phoneNumber: user.phoneNumber,
+        rollNo: user.rollNo || "",
         role: user.role,
         isActive: user.isActive,
       });
@@ -152,6 +153,22 @@ export function EditUserModal({ isOpen, user, onClose, onSuccess }: EditUserModa
               <option value="Admin">Admin</option>
             </select>
           </div>
+
+          {formData.role === "Student" && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                Roll Number (Student Only)
+              </label>
+              <input
+                type="text"
+                name="rollNo"
+                value={formData.rollNo || ""}
+                onChange={handleChange}
+                placeholder="e.g. STU-1001"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-2.5 text-sm font-medium text-foreground focus:border-teal-500 focus:bg-white focus:outline-none transition"
+              />
+            </div>
+          )}
 
           {/* Account Activation Status Toggle */}
           <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">

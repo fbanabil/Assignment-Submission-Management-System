@@ -4,6 +4,7 @@ export type SubmissionResponseDto = {
   id: string;
   studentName: string;
   studentEmail: string;
+  studentRollNo?: string;
   assignmentTitle: string;
   className: string;
   classSection: string;
@@ -26,6 +27,8 @@ export type SubmissionFilterDto = {
   studentName?: string;
   studentEmail?: string;
   status?: string;
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -90,6 +93,8 @@ export async function getSubmissions(
   if (filter.studentName) query.set("studentName", filter.studentName);
   if (filter.studentEmail) query.set("studentEmail", filter.studentEmail);
   if (filter.status) query.set("status", filter.status);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(pageNumber));
   query.set("pageSize", String(pageSize));
 

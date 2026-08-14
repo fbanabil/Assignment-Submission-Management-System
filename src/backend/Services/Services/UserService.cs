@@ -83,6 +83,7 @@ public class UserService : IUserService
             PasswordHash = await _passwordHelper.HashPassword(dto.Password),
             Role = dto.Role,
             PhoneNumber = dto.PhoneNumber,
+            RollNo = dto.Role == UserRole.Student ? dto.RollNo : null,
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };
@@ -96,7 +97,7 @@ public class UserService : IUserService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while creating a new user.");
-            throw new Exception("An error occurred while creating a new user. Please try again later.");
+            throw new InternalServerErrorException("An error occurred while creating a new user. Please try again later.");
         }
 
         return user;
@@ -122,6 +123,8 @@ public class UserService : IUserService
         if (dto.Role != null) user.Role = dto.Role.Value;
         if (dto.IsActive != null) user.IsActive = dto.IsActive.Value;
         if (dto.PhoneNumber != null) user.PhoneNumber = dto.PhoneNumber;
+        if (dto.RollNo != null) user.RollNo = dto.RollNo;
+        if (user.Role != UserRole.Student) user.RollNo = null;
 
         // Save the changes to the database
         await _context.SaveChangesAsync();
@@ -221,7 +224,7 @@ public class UserService : IUserService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while creating a new refresh token.");
-            throw new Exception("An error occurred while creating a new refresh token. Please try again later.");
+            throw new InternalServerErrorException("An error occurred while creating a new refresh token. Please try again later.");
         }
 
         return refreshToken;
@@ -255,17 +258,17 @@ public class UserService : IUserService
         User? user = await _context.Users.FindAsync(token.UserId);
 
         // Validate that the user ID from the current HTTP context matches the user associated with the refresh token
-        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID claim not found.");
+        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedException("User ID claim not found.");
         if (Guid.TryParse(userIdClaim.Value, out Guid userId))
         {
             if(user == null || user.Id != userId)
             {
-                throw new UnauthorizedAccessException("Invalid refresh token for the current user.");
+                throw new ForbiddenException("Invalid refresh token for the current user.");
             }
         }
         else
         {
-            throw new UnauthorizedAccessException("Invalid user ID claim.");
+            throw new UnauthorizedException("Invalid user ID claim.");
         }
 
 
@@ -303,16 +306,16 @@ public class UserService : IUserService
             else
             {
                 _logger.LogWarning("Refresh token not found or already invalidated.");
-                throw new Exception("Refresh token not found or already invalidated.");
+                throw new BadRequestException("Refresh token not found or already invalidated.");
             }
 
                 // Add the JWT token to the blacklist
                 await _tokenBlacklistRepository.AddToBlacklistAsync(jwtToken, TimeSpan.FromDays(1));
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not BadRequestException)
         {
             _logger.LogError(ex, "An error occurred while invalidating tokens.");
-            throw new Exception("An error occurred while invalidating tokens. Please try again later.");
+            throw new InternalServerErrorException("An error occurred while invalidating tokens. Please try again later.");
         }
     }
 
@@ -379,6 +382,11 @@ public class UserService : IUserService
             query = query.Where(u => EF.Functions.ILike(u.PhoneNumber, $"%{filterDto.PhoneNumber}%"));
         }
 
+        if(!string.IsNullOrEmpty(filterDto.RollNo))
+        {
+            query = query.Where(u => u.RollNo != null && EF.Functions.ILike(u.RollNo, $"%{filterDto.RollNo}%"));
+        }
+
         if(filterDto.Role.HasValue)
         {
             query = query.Where(u => u.Role == filterDto.Role.Value);
@@ -389,7 +397,18 @@ public class UserService : IUserService
             query = query.Where(u => u.IsActive == filterDto.IsActive.Value);
         }
 
+        bool isDesc = filterDto.SortOrder == SortOrder.Desc;
+        string sortBy = filterDto.SortBy?.ToLower().Trim() ?? "createdat";
 
+        query = sortBy switch
+        {
+            "name" or "fullname" => isDesc ? query.OrderByDescending(u => u.FullName) : query.OrderBy(u => u.FullName),
+            "email" => isDesc ? query.OrderByDescending(u => u.Email) : query.OrderBy(u => u.Email),
+            "rollno" => isDesc ? query.OrderByDescending(u => u.RollNo) : query.OrderBy(u => u.RollNo),
+            "role" => isDesc ? query.OrderByDescending(u => u.Role) : query.OrderBy(u => u.Role),
+            "isactive" => isDesc ? query.OrderByDescending(u => u.IsActive) : query.OrderBy(u => u.IsActive),
+            _ => isDesc ? query.OrderByDescending(u => u.CreatedAt) : query.OrderBy(u => u.CreatedAt)
+        };
 
         // Create a PagedResultDto to hold the paginated results
         PagedResultDto<UserResponseDto> result = new PagedResultDto<UserResponseDto>
@@ -406,6 +425,7 @@ public class UserService : IUserService
                     FullName = u.FullName,
                     Email = u.Email,
                     PhoneNumber = u.PhoneNumber,
+                    RollNo = u.RollNo,
                     Role = u.Role,
                     IsActive = u.IsActive,
                     CreatedAt = u.CreatedAt
@@ -428,12 +448,12 @@ public class UserService : IUserService
     /// <exception cref="KeyNotFoundException">Thrown when the teacher is not found in the database.</exception>
     public async Task<(string TeacherName, string TeacherEmail, Guid TeacherId)> GetTeacherNameAndEmail(ClaimsPrincipal user, Guid? id)
     {
-        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID claim not found.");
+        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedException("User ID claim not found.");
         var userRoles = _contextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>();
         
         if(userIdClaim != null && id.HasValue && id.Value != Guid.Empty && id.ToString() != userIdClaim.Value)
         {
-            throw new UnauthorizedAccessException("You are not authorized to access this teacher's information.");
+            throw new ForbiddenException("You are not authorized to access this teacher's information.");
         }
 
         Guid teacherId = Guid.Parse(userIdClaim!.Value);
@@ -441,7 +461,7 @@ public class UserService : IUserService
         var teacher = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId && u.Role == UserRole.Teacher);
         if (teacher == null)
         {
-            throw new KeyNotFoundException("Teacher not found.");
+            throw new NotFoundException("Teacher not found.");
         }
 
         return (teacher.FullName, teacher.Email, teacherId);
@@ -459,13 +479,13 @@ public class UserService : IUserService
     /// <exception cref="UnauthorizedAccessException">Thrown when any of the required claims are missing.</exception>
     public async Task<(Guid UserId, string Email, List<string> Roles)> GetUserIdAndEmailFromClaims()
     {
-        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID claim not found.");
+        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedException("User ID claim not found.");
         var userRoles = _contextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>();
-        var userEmailClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email) ?? throw new UnauthorizedAccessException("User email claim not found.");
+        var userEmailClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email) ?? throw new UnauthorizedException("User email claim not found.");
 
         if (userIdClaim == null)
         {
-            throw new UnauthorizedAccessException("User ID claim not found.");
+            throw new UnauthorizedException("User ID claim not found.");
         }
 
         Guid userId = Guid.Parse(userIdClaim.Value);

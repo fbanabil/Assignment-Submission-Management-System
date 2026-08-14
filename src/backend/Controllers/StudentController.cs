@@ -26,6 +26,9 @@ namespace Backend.Controllers
             _environment = environment;
         }
 
+
+
+
         /// <summary>
         /// Retrieves the dashboard summary for the current student.
         /// </summary>
@@ -34,6 +37,9 @@ namespace Backend.Controllers
         {
             return await _dashboardHandler.HandleDashboardAsync(studentId);
         }
+
+
+
 
         /// <summary>
         /// Retrieves published assignments for the student's enrolled classes with pending/submitted/graded filter.
@@ -44,6 +50,9 @@ namespace Backend.Controllers
             return await _assignmentHandler.HandleGetStudentAssignmentsAsync(filterDto);
         }
 
+
+
+
         /// <summary>
         /// Retrieves full details, deadline countdown data, and submission status for a specific assignment.
         /// </summary>
@@ -52,6 +61,9 @@ namespace Backend.Controllers
         {
             return await _assignmentHandler.HandleGetStudentAssignmentDetailAsync(id);
         }
+
+
+
 
         /// <summary>
         /// Submits work for an assignment (supports text and/or file URL, handles resubmission logic).
@@ -62,6 +74,9 @@ namespace Backend.Controllers
             return await _assignmentHandler.HandleCreateStudentSubmissionAsync(dto);
         }
 
+
+
+
         /// <summary>
         /// Uploads a submission attachment file to /wwwroot/assignments/ with a unique name and returns the relative path /assignments/*.
         /// </summary>
@@ -70,6 +85,9 @@ namespace Backend.Controllers
         {
             return await _assignmentHandler.HandleFileUploadAsync(file, _environment);
         }
+
+
+
 
         /// <summary>
         /// Unsubmits / deletes a student submission if resubmission is allowed and before deadline.
@@ -83,6 +101,9 @@ namespace Backend.Controllers
         {
             return await _assignmentHandler.HandleUnsubmitAssignmentAsync(id);
         }
+
+
+
 
         /// <summary>
         /// Retrieves the history of all submissions, marks, and feedback for the requesting student.

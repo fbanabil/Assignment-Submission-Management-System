@@ -1,4 +1,4 @@
-﻿using AssignmentSystem.Api.Models.Entities;
+using AssignmentSystem.Api.Models.Entities;
 using Backend.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,8 +15,11 @@ namespace Backend.Data
 
                 entity.HasIndex(e => e.Email).IsUnique();
 
-                entity.Property(e=>e.PhoneNumber)
+                entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(20);
+
+                entity.Property(e => e.RollNo)
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.FullName)
                     .IsRequired()

@@ -84,6 +84,15 @@ public class SubjectService : ISubjectService
             query = query.Where(s => _context.ClassSubjects.Any(cs => cs.SubjectId == s.Id && cs.ClassId == filterDto.ClassId.Value));
         }
 
+        bool isDesc = filterDto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy = filterDto.SortBy?.ToLower().Trim() ?? "name";
+
+        query = sortBy switch
+        {
+            "code" => isDesc ? query.OrderByDescending(s => s.Code) : query.OrderBy(s => s.Code),
+            _ => isDesc ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name)
+        };
+
         var totalCount = await query.CountAsync();
 
         var subjects = await query

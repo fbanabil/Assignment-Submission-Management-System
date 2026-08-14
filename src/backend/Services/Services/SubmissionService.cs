@@ -74,7 +74,7 @@ public class SubmissionService : ISubmissionService
 
         if(!userClaims.Roles.Contains("Student"))
         {
-            throw new UnauthorizedAccessException("Only students can create submissions.");
+            throw new ForbiddenException("Only students can create submissions.");
         }
 
         var submission = new Submission
@@ -112,13 +112,13 @@ public class SubmissionService : ISubmissionService
 
         if(!userClaims.Roles.Contains("Student"))
         {
-            throw new UnauthorizedAccessException("Only students can update submissions.");
+            throw new ForbiddenException("Only students can update submissions.");
         }
 
 
         if(submission.StudentId != userClaims.UserId)
         {
-            throw new UnauthorizedAccessException("You can only update your own submissions.");
+            throw new ForbiddenException("You can only update your own submissions.");
         }
 
 
@@ -148,7 +148,7 @@ public class SubmissionService : ISubmissionService
 
         if(!userClaims.Roles.Contains("Teacher"))
         {
-            throw new UnauthorizedAccessException("Only teachers can grade submissions.");
+            throw new ForbiddenException("Only teachers can grade submissions.");
         }
 
 
@@ -209,7 +209,8 @@ public class SubmissionService : ISubmissionService
                 .ThenInclude(a => a.Subject)
             .Include(s => s.Assignment)
                 .ThenInclude(a => a.Class)
-                .Where(s => s.Assignment.TeacherId == userClaims.UserId)
+                // if role is teacher, filter by teacher id
+                .Where(s => userClaims.Roles.Contains("Teacher") ? s.Assignment.TeacherId == userClaims.UserId : true)
             .AsQueryable();
 
         // Apply filters
@@ -227,6 +228,20 @@ public class SubmissionService : ISubmissionService
         if(!string.IsNullOrEmpty(filterDto.SubjectName))
             query = query.Where(s => EF.Functions.Like(s.Assignment.Subject.Name, $"%{filterDto.SubjectName}%"));
 
+        bool isDesc = filterDto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy = filterDto.SortBy?.ToLower().Trim() ?? "submittedat";
+
+        query = sortBy switch
+        {
+            "studentname" => isDesc ? query.OrderByDescending(s => s.Student.FullName) : query.OrderBy(s => s.Student.FullName),
+            "assignmenttitle" => isDesc ? query.OrderByDescending(s => s.Assignment.Title) : query.OrderBy(s => s.Assignment.Title),
+            "classname" => isDesc ? query.OrderByDescending(s => s.Assignment.Class.Name) : query.OrderBy(s => s.Assignment.Class.Name),
+            "subjectname" => isDesc ? query.OrderByDescending(s => s.Assignment.Subject.Name) : query.OrderBy(s => s.Assignment.Subject.Name),
+            "status" => isDesc ? query.OrderByDescending(s => s.Status) : query.OrderBy(s => s.Status),
+            "marks" or "grade" => isDesc ? query.OrderByDescending(s => s.Marks) : query.OrderBy(s => s.Marks),
+            _ => isDesc ? query.OrderByDescending(s => s.SubmittedAt) : query.OrderBy(s => s.SubmittedAt)
+        };
+
         // Get total count before pagination
         var totalCount = await query.CountAsync();
 
@@ -243,6 +258,7 @@ public class SubmissionService : ISubmissionService
             Id = s.Id,
             StudentName = s.Student.FullName,
             StudentEmail = s.Student.Email,
+            StudentRollNo = s.Student.RollNo,
             AssignmentTitle = s.Assignment.Title,
             ClassName = s.Assignment.Class.Name,
             ClassSection = s.Assignment.Class.Section,

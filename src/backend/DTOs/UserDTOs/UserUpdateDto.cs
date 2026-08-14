@@ -10,4 +10,5 @@ public class UserUpdateDto
     public UserRole? Role { get; set; }
     public bool? IsActive { get; set; }
     public string? PhoneNumber { get; set; }
+    public string? RollNo { get; set; }
 }

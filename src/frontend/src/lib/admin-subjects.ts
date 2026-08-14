@@ -30,6 +30,8 @@ export type SubjectFilterDto = {
   name?: string;
   code?: string;
   classId?: string;
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -69,6 +71,8 @@ export async function getSubjects(filter: SubjectFilterDto): Promise<PagedSubjec
   if (filter.name) query.set("name", filter.name);
   if (filter.code) query.set("code", filter.code);
   if (filter.classId) query.set("classId", filter.classId);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(pageNumber));
   query.set("pageSize", String(pageSize));
 

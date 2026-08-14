@@ -1,6 +1,7 @@
-namespace Backend.DTOs.SubmissionDTOs;
-
 using System;
+using AssignmentSystem.Api.Models.Enums;
+
+namespace Backend.DTOs.SubmissionDTOs;
 
 public class SubmissionFilterDto
 {
@@ -12,6 +13,8 @@ public class SubmissionFilterDto
     public string? StudentName { get; set; }
     public string? StudentEmail { get; set; }
     public string? Status { get; set; }
+    public string? SortBy { get; set; }
+    public SortOrder SortOrder { get; set; } = SortOrder.Desc;
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }

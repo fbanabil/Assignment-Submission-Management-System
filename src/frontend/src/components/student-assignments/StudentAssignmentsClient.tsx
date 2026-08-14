@@ -75,6 +75,8 @@ function renderStatusBadge(status: string, marks?: number, maxMarks?: number) {
   }
 }
 
+import { formatDisplayError } from "@/lib/api-error";
+
 export function StudentAssignmentsClient() {
   const [filter, setFilter] = useState<StudentAssignmentFilterDto>({
     statusFilter: "All",
@@ -95,7 +97,7 @@ export function StudentAssignmentsClient() {
       setPagedData(data);
     } catch (err) {
       console.error("Failed to load student assignments:", err);
-      setError(err instanceof Error ? err.message : "Unable to load assignments.");
+      setError(formatDisplayError(err, "Unable to load assignments."));
     } finally {
       setLoading(false);
     }
@@ -121,58 +123,64 @@ export function StudentAssignmentsClient() {
     <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         {/* Header */}
-        <header className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/15 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-indigo-700">
+        <header className="overflow-hidden rounded-4xl border border-white/70 bg-(--color-surface) px-6 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/15 bg-teal-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
                 Student Portal
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                   My Class Assignments
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-(--color-muted) sm:text-base">
                   View published assignments for your enrolled subjects, check submission status, track upcoming deadlines, and turn in your work.
                 </p>
               </div>
             </div>
 
             {/* Quick Portal Navigation */}
-            <div className="flex flex-wrap items-center gap-3">
+            <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium shrink-0">
               <Link
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
                 href="/student"
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
                 Dashboard
               </Link>
               <Link
-                href="/student/submissions"
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                className="rounded-full bg-slate-900 px-4 py-2 text-white shadow-md transition hover:bg-slate-800 whitespace-nowrap"
+                href="/student/assignments"
               >
-                My Submissions & Grades
+                My Assignments
+              </Link>
+              <Link
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
+                href="/student/submissions"
+              >
+                Submissions & Grades
               </Link>
               <button
                 onClick={() => logoutUser()}
-                className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-slate-800"
+                className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 font-semibold transition hover:bg-rose-600 hover:text-white cursor-pointer whitespace-nowrap"
               >
-                Sign out
+                Logout 🚪
               </button>
-            </div>
+            </nav>
           </div>
         </header>
 
         {/* Filter & Search Bar */}
-        <section className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+        <section className="flex flex-col gap-4 rounded-3xl border border-white/70 bg-(--color-surface) p-5 shadow-[0_16px_50px_rgba(15,23,42,0.08)] backdrop-blur lg:flex-row lg:items-center lg:justify-between">
           {/* Status Filter Tabs */}
           <div className="flex flex-wrap items-center gap-2">
             {(["All", "Pending", "Submitted", "Graded"] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => handleStatusFilterChange(status)}
-                className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                className={`rounded-full px-4 py-2 text-xs font-semibold transition cursor-pointer ${
                   filter.statusFilter === status
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    ? "bg-foreground text-background shadow-md"
+                    : "border border-slate-200 bg-white/80 text-slate-700 hover:bg-slate-100"
                 }`}
               >
                 {status === "Pending" ? "Pending / Not Submitted" : `${status} Assignments`}
@@ -187,12 +195,12 @@ export function StudentAssignmentsClient() {
               value={filter.search || ""}
               onChange={handleSearchChange}
               placeholder="Search title, subject, or class..."
-              className="w-full sm:w-72 rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-hidden"
+              className="w-full sm:w-72 rounded-2xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm font-medium text-foreground placeholder:text-slate-400 focus:border-teal-500 focus:outline-none transition shadow-2xs"
             />
             <button
               onClick={() => fetchAssignments(filter)}
               disabled={loading}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600 hover:bg-slate-100 transition shadow-2xs cursor-pointer disabled:opacity-50"
             >
               Refresh
             </button>
@@ -201,7 +209,7 @@ export function StudentAssignmentsClient() {
 
         {/* Error Alert */}
         {error && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 text-sm font-medium">
+          <div className="rounded-3xl border border-rose-200 bg-rose-50/90 p-4 shadow-sm text-rose-700 text-sm font-semibold">
             {error}
           </div>
         )}
@@ -209,11 +217,11 @@ export function StudentAssignmentsClient() {
         {/* Assignments Grid */}
         <section className="flex flex-col gap-4">
           {loading ? (
-            <div className="flex h-64 items-center justify-center rounded-3xl border border-slate-200 bg-white text-sm text-slate-400">
+            <div className="flex h-64 items-center justify-center rounded-3xl border border-white/70 bg-(--color-surface) text-sm text-slate-400 backdrop-blur">
               Loading assignments...
             </div>
           ) : !pagedData?.items || pagedData.items.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-6 text-center">
+            <div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/60 p-6 text-center">
               <svg className="h-10 w-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -229,15 +237,13 @@ export function StudentAssignmentsClient() {
                 return (
                   <div
                     key={item.id}
-                    className={`flex flex-col justify-between rounded-3xl border p-6 shadow-sm transition hover:shadow-md ${
-                      isSubmitted ? "border-slate-200 bg-white" : "border-amber-200/70 bg-amber-50/20"
-                    }`}
+                    className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-2xs hover:border-teal-500/40 hover:shadow-md transition group"
                   >
                     <div className="space-y-3">
                       {/* Top Badges */}
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="rounded-md bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                          <span className="inline-flex rounded-full border border-purple-500/15 bg-purple-500/10 px-2.5 py-0.5 text-xs font-mono font-bold text-purple-700">
                             {item.subjectCode || item.subjectName}
                           </span>
                           <span className="text-xs text-slate-500">{item.className}</span>
@@ -247,14 +253,14 @@ export function StudentAssignmentsClient() {
 
                       {/* Title & Description */}
                       <div>
-                        <h2 className="text-lg font-bold text-slate-900">{item.title}</h2>
-                        <p className="mt-1 line-clamp-2 text-xs text-slate-600 leading-relaxed">
+                        <h2 className="text-lg font-semibold text-foreground group-hover:text-teal-700 transition">{item.title}</h2>
+                        <p className="mt-1 line-clamp-2 text-xs text-(--color-muted) leading-relaxed">
                           {item.description || "No description provided."}
                         </p>
                       </div>
 
                       {/* Teacher & Submission Status Bar */}
-                      <div className="flex flex-col gap-1 border-t border-slate-100 pt-3 text-xs">
+                      <div className="flex flex-col gap-1 border-t border-black/5 pt-3 text-xs">
                         <div className="flex items-center justify-between text-slate-500">
                           <span>Teacher: <strong className="text-slate-700">{item.teacherName}</strong></span>
                           <span className="font-semibold text-slate-800">
@@ -278,7 +284,7 @@ export function StudentAssignmentsClient() {
                     </div>
 
                     {/* Footer / Actions */}
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+                    <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-4">
                       <div className="text-xs">
                         <span className="text-slate-400">Deadline: </span>
                         <span className="font-medium text-slate-700">{formatDateTime(item.deadline)}</span>
@@ -286,16 +292,13 @@ export function StudentAssignmentsClient() {
 
                       <Link
                         href={`/student/assignments/${item.id}`}
-                        className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold shadow-xs transition ${
+                        className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium shadow-2xs transition cursor-pointer ${
                           isSubmitted
-                            ? "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                            : "bg-indigo-600 text-white hover:bg-indigo-700"
+                            ? "border border-slate-300 bg-white text-slate-800 hover:bg-slate-900 hover:text-white"
+                            : "bg-foreground text-background hover:opacity-90"
                         }`}
                       >
-                        {isSubmitted ? "View / Edit Submission" : "Turn In Work"}
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+                        {isSubmitted ? "View / Edit Submission" : "Turn In Work"} →
                       </Link>
                     </div>
                   </div>
@@ -306,7 +309,7 @@ export function StudentAssignmentsClient() {
 
           {/* Pagination Footer */}
           {pagedData && pagedData.totalPages > 1 && (
-            <div className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white px-6 py-4 text-xs text-slate-500 shadow-sm">
+            <div className="flex items-center justify-between rounded-3xl border border-white/70 bg-(--color-surface) px-6 py-4 text-xs text-slate-500 shadow-[0_16px_50px_rgba(15,23,42,0.08)] backdrop-blur">
               <span>
                 Page {pagedData.pageNumber} of {pagedData.totalPages} ({pagedData.totalCount} total assignments)
               </span>
@@ -314,16 +317,16 @@ export function StudentAssignmentsClient() {
                 <button
                   onClick={() => handlePageChange(pagedData.pageNumber - 1)}
                   disabled={!pagedData.hasPreviousPage}
-                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
-                  Previous
+                  ← Previous
                 </button>
                 <button
                   onClick={() => handlePageChange(pagedData.pageNumber + 1)}
                   disabled={!pagedData.hasNextPage}
-                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
-                  Next
+                  Next →
                 </button>
               </div>
             </div>

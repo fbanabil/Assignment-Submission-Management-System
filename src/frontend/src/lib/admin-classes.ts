@@ -25,6 +25,8 @@ export type ClassFilterDto = {
   name?: string;
   section?: string;
   academicYear?: string;
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -59,6 +61,8 @@ export async function getClasses(filter: ClassFilterDto): Promise<PagedClassResu
   if (filter.name) query.set("name", filter.name);
   if (filter.section) query.set("section", filter.section);
   if (filter.academicYear) query.set("academicYear", filter.academicYear);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(pageNumber));
   query.set("pageSize", String(pageSize));
 

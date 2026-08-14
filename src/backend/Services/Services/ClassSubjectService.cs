@@ -6,6 +6,8 @@ using AssignmentSystem.Api.Services.Interfaces;
 using Backend.DTOs.ClassSubjectDTOs;
 using Microsoft.EntityFrameworkCore;
 
+using Backend.Middlewares;
+
 public class ClassSubjectService : IClassSubjectService
 {
     private readonly AppDbContext _context;
@@ -34,7 +36,7 @@ public class ClassSubjectService : IClassSubjectService
 
         if (existingClassSubject != null)
         {
-            throw new InvalidOperationException("This ClassSubject already exists.");
+            throw new BadRequestException("This class subject association already exists.");
         }
 
 

@@ -31,5 +31,14 @@ public class UserCreateDtoValidator : AbstractValidator<UserCreateDto>
 
         RuleFor(x=>x.ConfirmPassword)
             .Equal(x => x.Password).WithMessage("Confirm password must match the password.");
+
+        RuleFor(x => x.RollNo)
+            .MaximumLength(50).WithMessage("Roll number must not exceed 50 characters.")
+            .When(x => !string.IsNullOrEmpty(x.RollNo));
+
+        RuleFor(x => x.RollNo)
+            .Must((dto, rollNo) => string.IsNullOrWhiteSpace(rollNo))
+            .WithMessage("Roll number can only be assigned to Student accounts.")
+            .When(x => x.Role != UserRole.Student);
     }
 }

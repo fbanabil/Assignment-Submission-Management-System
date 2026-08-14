@@ -7,6 +7,8 @@ export type TeacherClassFilterDto = {
   academicYear?: string;
   subjectName?: string;
   subjectCode?: string;
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -46,6 +48,8 @@ export async function getTeacherClasses(
   if (filter.academicYear) query.set("academicYear", filter.academicYear);
   if (filter.subjectName) query.set("subjectName", filter.subjectName);
   if (filter.subjectCode) query.set("subjectCode", filter.subjectCode);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   if (teacherId) query.set("teacherId", teacherId);
 
   query.set("pageNumber", String(pageNumber));

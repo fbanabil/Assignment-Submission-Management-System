@@ -137,12 +137,22 @@ public class StudentEnrollmentService : IStudentEnrollmentService
             query = query.Where(se => se.Class.Name.ToLower().Contains(filterDto.ClassName.ToLower()));
         }
 
+        bool isDesc1 = filterDto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy1 = filterDto.SortBy?.ToLower().Trim() ?? "enrolledat";
+
+        query = sortBy1 switch
+        {
+            "studentname" => isDesc1 ? query.OrderByDescending(se => se.Student.FullName) : query.OrderBy(se => se.Student.FullName),
+            "rollno" or "studentrollno" => isDesc1 ? query.OrderByDescending(se => se.Student.RollNo) : query.OrderBy(se => se.Student.RollNo),
+            "classname" => isDesc1 ? query.OrderByDescending(se => se.Class.Name) : query.OrderBy(se => se.Class.Name),
+            _ => isDesc1 ? query.OrderByDescending(se => se.EnrolledAt) : query.OrderBy(se => se.EnrolledAt)
+        };
+
         int totalCount = await query.CountAsync();
         int pageNumber = Math.Max(1, filterDto.PageNumber);
         int pageSize = Math.Max(1, filterDto.PageSize);
 
         var items = await query
-            .OrderByDescending(se => se.EnrolledAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .Select(se => new StudentEnrollmentResponseDto
@@ -151,6 +161,7 @@ public class StudentEnrollmentService : IStudentEnrollmentService
                 StudentId = se.StudentId,
                 StudentName = se.Student.FullName,
                 StudentEmail = se.Student.Email,
+                StudentRollNo = se.Student.RollNo,
                 ClassId = se.ClassId,
                 ClassName = se.Class.Name,
                 ClassSection = se.Class.Section,
@@ -204,20 +215,31 @@ public class StudentEnrollmentService : IStudentEnrollmentService
             query = query.Where(se => se.Class.Name.ToLower().Contains(filterDto.ClassName.ToLower()));
         }
 
-        int totalCount = await query.CountAsync();
-        int pageNumber = Math.Max(1, filterDto.PageNumber);
-        int pageSize = Math.Max(1, filterDto.PageSize);
+        bool isDesc2 = filterDto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy2 = filterDto.SortBy?.ToLower().Trim() ?? "enrolledat";
 
-        var items = await query
-            .OrderByDescending(se => se.EnrolledAt)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
+        query = sortBy2 switch
+        {
+            "studentname" => isDesc2 ? query.OrderByDescending(se => se.Student.FullName) : query.OrderBy(se => se.Student.FullName),
+            "rollno" or "studentrollno" => isDesc2 ? query.OrderByDescending(se => se.Student.RollNo) : query.OrderBy(se => se.Student.RollNo),
+            "classname" => isDesc2 ? query.OrderByDescending(se => se.Class.Name) : query.OrderBy(se => se.Class.Name),
+            _ => isDesc2 ? query.OrderByDescending(se => se.EnrolledAt) : query.OrderBy(se => se.EnrolledAt)
+        };
+
+        int totalCount2 = await query.CountAsync();
+        int pageNumber2 = Math.Max(1, filterDto.PageNumber);
+        int pageSize2 = Math.Max(1, filterDto.PageSize);
+
+        var items2 = await query
+            .Skip((pageNumber2 - 1) * pageSize2)
+            .Take(pageSize2)
             .Select(se => new StudentEnrollmentResponseDto
             {
                 Id = se.Id,
                 StudentId = se.StudentId,
                 StudentName = se.Student.FullName,
                 StudentEmail = se.Student.Email,
+                StudentRollNo = se.Student.RollNo,
                 ClassId = se.ClassId,
                 ClassName = se.Class.Name,
                 ClassSection = se.Class.Section,
@@ -228,10 +250,10 @@ public class StudentEnrollmentService : IStudentEnrollmentService
 
         return new PagedResultDto<StudentEnrollmentResponseDto>
         {
-            Items = items,
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
+            Items = items2,
+            TotalCount = totalCount2,
+            PageNumber = pageNumber2,
+            PageSize = pageSize2
         };
     }
 }

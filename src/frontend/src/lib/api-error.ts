@@ -2,7 +2,8 @@ import { getAuthToken, removeAuthToken, setAuthToken } from "./auth";
 
 /**
  * Formats non-OK fetch API responses into clean human-readable error messages
- * including status codes (e.g. "Status 400: Email is required.")
+ * including status codes (e.g. "Status 400: Invalid email or password.")
+ * Ensures raw JSON body text or raw objects are never exposed to users.
  */
 export async function parseApiResponseError(response: Response): Promise<string> {
   const status = response.status;
@@ -13,17 +14,22 @@ export async function parseApiResponseError(response: Response): Promise<string>
     return "Status 401: Login first";
   }
 
-  let extractedMessage = response.statusText || `Request failed`;
+  let extractedMessage = response.statusText || "Request failed";
 
   try {
     const text = await response.text();
     if (text && text.trim()) {
+      const trimmed = text.trim();
       try {
-        const data = JSON.parse(text);
+        const data = JSON.parse(trimmed);
         if (typeof data === "string" && data.trim()) {
           extractedMessage = data.trim();
         } else if (data && typeof data === "object") {
-          if (data.errors && typeof data.errors === "object") {
+          if (typeof data.error === "string" && data.error.trim()) {
+            extractedMessage = data.error.trim();
+          } else if (typeof data.message === "string" && data.message.trim()) {
+            extractedMessage = data.message.trim();
+          } else if (data.errors && typeof data.errors === "object") {
             const messages: string[] = [];
             for (const key of Object.keys(data.errors)) {
               const errList = data.errors[key];
@@ -35,13 +41,9 @@ export async function parseApiResponseError(response: Response): Promise<string>
             }
             if (messages.length > 0) {
               extractedMessage = messages.join(" ");
-            } else if (typeof data.title === "string") {
-              extractedMessage = data.title;
+            } else if (typeof data.title === "string" && data.title.trim()) {
+              extractedMessage = data.title.trim();
             }
-          } else if (typeof data.message === "string" && data.message.trim()) {
-            extractedMessage = data.message.trim();
-          } else if (typeof data.error === "string" && data.error.trim()) {
-            extractedMessage = data.error.trim();
           } else if (typeof data.title === "string" && data.title.trim()) {
             extractedMessage = data.title.trim();
           } else if (typeof data.detail === "string" && data.detail.trim()) {
@@ -49,7 +51,10 @@ export async function parseApiResponseError(response: Response): Promise<string>
           }
         }
       } catch {
-        extractedMessage = text.trim();
+        // If not valid JSON, check if it's plain text without HTML tags or JSON braces
+        if (!trimmed.startsWith("{") && !trimmed.startsWith("<") && trimmed.length < 200) {
+          extractedMessage = trimmed;
+        }
       }
     }
   } catch {
@@ -57,6 +62,47 @@ export async function parseApiResponseError(response: Response): Promise<string>
   }
 
   return `Status ${status}: ${extractedMessage}`;
+}
+
+/**
+ * Utility to extract a clean display error string from any thrown error or response message,
+ * removing any leaked JSON strings, raw curly braces, or duplicated status prefixes.
+ */
+export function formatDisplayError(err: unknown, fallbackMessage = "An error occurred."): string {
+  if (!err) return fallbackMessage;
+
+  let raw = typeof err === "string" ? err : err instanceof Error ? err.message : fallbackMessage;
+  if (!raw || typeof raw !== "string") return fallbackMessage;
+
+  let message = raw.trim();
+
+  // If message itself is a JSON object string
+  if (message.startsWith("{") && message.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(message);
+      if (parsed && typeof parsed === "object") {
+        if (typeof parsed.error === "string") return parsed.error;
+        if (typeof parsed.message === "string") return parsed.message;
+        if (typeof parsed.title === "string") return parsed.title;
+      }
+    } catch {
+      // Ignore JSON parse error
+    }
+  }
+
+  // Handle embedded JSON pattern like {"status":400,"error":"..."}
+  if (message.includes('{"status"')) {
+    const match = message.match(/"error"\s*:\s*"([^"]+)"/) || message.match(/"message"\s*:\s*"([^"]+)"/);
+    if (match && match[1]) {
+      const statusCodeMatch = message.match(/"status"\s*:\s*(\d+)/);
+      if (statusCodeMatch && statusCodeMatch[1]) {
+        return `Status ${statusCodeMatch[1]}: ${match[1]}`;
+      }
+      return match[1];
+    }
+  }
+
+  return message;
 }
 
 /**

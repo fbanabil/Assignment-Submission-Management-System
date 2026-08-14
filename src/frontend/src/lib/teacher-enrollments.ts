@@ -5,6 +5,7 @@ export type StudentEnrollmentResponseDto = {
   studentId: string;
   studentName: string;
   studentEmail: string;
+  studentRollNo?: string;
   classId: string;
   className: string;
   classSection: string;
@@ -23,6 +24,8 @@ export type StudentEnrollmentFilterDto = {
   studentId?: string;
   studentName?: string;
   className?: string;
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -63,6 +66,8 @@ export async function getTeacherEnrollments(
   if (filter.studentId) query.set("studentId", filter.studentId);
   if (filter.studentName) query.set("studentName", filter.studentName);
   if (filter.className) query.set("className", filter.className);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(pageNumber));
   query.set("pageSize", String(pageSize));
 

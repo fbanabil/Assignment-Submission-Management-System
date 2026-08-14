@@ -27,6 +27,8 @@ export type AssignmentFilterDto = {
   teacherName?: string;
   teacherEmail?: string;
   status?: string;
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -67,6 +69,8 @@ export async function getAssignments(
   if (filter.teacherName) query.set("teacherName", filter.teacherName);
   if (filter.teacherEmail) query.set("teacherEmail", filter.teacherEmail);
   if (filter.status) query.set("status", filter.status);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(pageNumber));
   query.set("pageSize", String(pageSize));
 

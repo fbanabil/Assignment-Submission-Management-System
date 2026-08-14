@@ -39,3 +39,16 @@ body {
   background: rgba(15, 118, 110, 0.2);
   color: var(--foreground);
 }
+
+/* Hide Next.js dev indicator icon and portal elements */
+nextjs-portal,
+#nextjs-dev-tools-wrapper,
+[data-nextjs-toast],
+[data-nextjs-dialog-overlay],
+div[data-nextjs-dev-tools-button],
+button[aria-label="Next.js Dev Tools"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

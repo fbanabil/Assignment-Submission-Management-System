@@ -5,6 +5,7 @@ public class SubmissionResponseDto
     public Guid Id { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public string StudentEmail { get; set; } = string.Empty;
+    public string? StudentRollNo { get; set; }
     public string AssignmentTitle { get; set; } = string.Empty;
     public string ClassName { get; set; } = string.Empty;
     public string ClassSection { get; set; } = string.Empty;

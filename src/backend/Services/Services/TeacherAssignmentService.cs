@@ -119,6 +119,19 @@ public class TeacherAssignmentService : ITeacherAssignmentService
         {
             query = query.Where(ta => EF.Functions.Like(ta.Teacher.Email, $"%{dto.TeacherEmail}%"));
         }
+
+        bool isDesc1 = dto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy1 = dto.SortBy?.ToLower().Trim() ?? "teachername";
+
+        query = sortBy1 switch
+        {
+            "classname" => isDesc1 ? query.OrderByDescending(ta => ta.ClassSubject.Class.Name) : query.OrderBy(ta => ta.ClassSubject.Class.Name),
+            "subjectcode" => isDesc1 ? query.OrderByDescending(ta => ta.ClassSubject.Subject.Code) : query.OrderBy(ta => ta.ClassSubject.Subject.Code),
+            "subjectname" => isDesc1 ? query.OrderByDescending(ta => ta.ClassSubject.Subject.Name) : query.OrderBy(ta => ta.ClassSubject.Subject.Name),
+            "teacheremail" => isDesc1 ? query.OrderByDescending(ta => ta.Teacher.Email) : query.OrderBy(ta => ta.Teacher.Email),
+            _ => isDesc1 ? query.OrderByDescending(ta => ta.Teacher.FullName) : query.OrderBy(ta => ta.Teacher.FullName)
+        };
+
         var totalCount = await query.CountAsync();
         var items = await query
             .Skip((dto.PageNumber - 1) * dto.PageSize)
@@ -210,6 +223,18 @@ public class TeacherAssignmentService : ITeacherAssignmentService
         {
             query = query.Where(ta => EF.Functions.Like(ta.ClassSubject.Subject.Code, $"%{filterDto.SubjectCode}%"));
         }
+
+        bool isDesc2 = filterDto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy2 = filterDto.SortBy?.ToLower().Trim() ?? "classname";
+
+        query = sortBy2 switch
+        {
+            "classsection" => isDesc2 ? query.OrderByDescending(ta => ta.ClassSubject.Class.Section) : query.OrderBy(ta => ta.ClassSubject.Class.Section),
+            "academicyear" => isDesc2 ? query.OrderByDescending(ta => ta.ClassSubject.Class.AcademicYear) : query.OrderBy(ta => ta.ClassSubject.Class.AcademicYear),
+            "subjectname" => isDesc2 ? query.OrderByDescending(ta => ta.ClassSubject.Subject.Name) : query.OrderBy(ta => ta.ClassSubject.Subject.Name),
+            "subjectcode" => isDesc2 ? query.OrderByDescending(ta => ta.ClassSubject.Subject.Code) : query.OrderBy(ta => ta.ClassSubject.Subject.Code),
+            _ => isDesc2 ? query.OrderByDescending(ta => ta.ClassSubject.Class.Name) : query.OrderBy(ta => ta.ClassSubject.Class.Name)
+        };
 
         var totalCount = await query.CountAsync();
         var pageNumber = Math.Max(1, filterDto.PageNumber);

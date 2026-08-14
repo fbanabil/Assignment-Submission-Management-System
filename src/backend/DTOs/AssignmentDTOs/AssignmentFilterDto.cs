@@ -1,3 +1,5 @@
+using AssignmentSystem.Api.Models.Enums;
+
 namespace Backend.DTOs.AssignmentDTOs;
 
 public class AssignmentFilterDto
@@ -9,6 +11,8 @@ public class AssignmentFilterDto
     public string? TeacherName { get; set; }
     public string? TeacherEmail { get; set; }
     public string? Status { get; set; }
+    public string? SortBy { get; set; }
+    public SortOrder SortOrder { get; set; } = SortOrder.Asc;
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }

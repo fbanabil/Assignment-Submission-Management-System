@@ -9,5 +9,6 @@ public class UserCreateDto
     public string PhoneNumber { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string ConfirmPassword { get; set; } = string.Empty;
+    public string? RollNo { get; set; }
     public UserRole Role { get; set; }
 }

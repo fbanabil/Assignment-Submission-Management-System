@@ -28,5 +28,9 @@ public class UserFilterDtoValidator : AbstractValidator<UserFilterDto>
         RuleFor(x => x.PhoneNumber)
             .MaximumLength(50).WithMessage("Phone number filter must not exceed 50 characters.")
             .When(x => !string.IsNullOrEmpty(x.PhoneNumber));
+
+        RuleFor(x => x.RollNo)
+            .MaximumLength(50).WithMessage("Roll number filter must not exceed 50 characters.")
+            .When(x => !string.IsNullOrEmpty(x.RollNo));
     }
 }

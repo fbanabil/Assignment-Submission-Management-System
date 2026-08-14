@@ -7,6 +7,7 @@ import {
   type TeacherDashboardResponseDto,
 } from "@/lib/teacher-dashboard";
 import { logoutUser } from "@/lib/auth";
+import { formatDisplayError } from "@/lib/api-error";
 
 function formatDateTime(value?: string) {
   if (!value) return "N/A";
@@ -44,7 +45,7 @@ export function TeacherDashboardClient() {
       setData(res);
     } catch (err) {
       console.error("Failed to load teacher dashboard:", err);
-      setError(err instanceof Error ? err.message : "Unable to load teacher dashboard data.");
+      setError(formatDisplayError(err, "Unable to load teacher dashboard data."));
     } finally {
       setLoading(false);
     }
@@ -59,8 +60,8 @@ export function TeacherDashboardClient() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         {/* Header section styled matching modern dashboard design */}
         <header className="overflow-hidden rounded-4xl border border-white/70 bg-(--color-surface) px-6 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur sm:px-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl space-y-3">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/15 bg-teal-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
                 Teacher Portal
               </div>
@@ -68,47 +69,47 @@ export function TeacherDashboardClient() {
                 <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                   Welcome back, {data?.teacherName || "Teacher"}!
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-7 text-(--color-muted) sm:text-base">
-                  Manage your assigned classes, track upcoming assignment deadlines, and grade student submissions.
+                <p className="mt-2 text-sm leading-7 text-(--color-muted) sm:text-base">
+                  Track your classes, assignments, student submissions, and manage academic rosters.
                 </p>
               </div>
             </div>
 
             {/* Quick Portal Navigation Links */}
-            <nav className="flex flex-wrap items-center gap-2 text-sm font-medium">
+            <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium shrink-0">
               <Link
-                className="rounded-full bg-slate-900 px-5 py-2.5 text-white shadow-md transition hover:bg-slate-800"
+                className="rounded-full bg-slate-900 px-4 py-2 text-white shadow-md transition hover:bg-slate-800 whitespace-nowrap"
                 href="/teacher"
               >
                 Dashboard
               </Link>
               <Link
-                className="rounded-full border border-black/10 bg-white px-5 py-2.5 text-foreground transition hover:border-black/20 hover:bg-black/2"
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
                 href="/teacher/classes"
               >
                 My Classes
               </Link>
               <Link
-                className="rounded-full border border-black/10 bg-white px-5 py-2.5 text-foreground transition hover:border-black/20 hover:bg-black/2"
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
                 href="/teacher/assignments"
               >
                 Assignments
               </Link>
               <Link
-                className="rounded-full border border-black/10 bg-white px-5 py-2.5 text-foreground transition hover:border-black/20 hover:bg-black/2"
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
                 href="/teacher/submissions"
               >
                 Submissions
               </Link>
               <Link
-                className="rounded-full border border-black/10 bg-white px-5 py-2.5 text-foreground transition hover:border-black/20 hover:bg-black/2"
+                className="rounded-full border border-black/10 bg-white px-4 py-2 text-foreground transition hover:border-black/20 hover:bg-black/2 whitespace-nowrap"
                 href="/teacher/enrollments"
               >
                 Enrollments
               </Link>
               <button
                 onClick={() => logoutUser()}
-                className="rounded-full border border-rose-200 bg-rose-50 px-5 py-2.5 text-rose-700 font-semibold transition hover:bg-rose-600 hover:text-white cursor-pointer"
+                className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 font-semibold transition hover:bg-rose-600 hover:text-white cursor-pointer whitespace-nowrap"
               >
                 Logout 🚪
               </button>

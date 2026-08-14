@@ -104,6 +104,17 @@ public class ClassService : IClassService
         if (!string.IsNullOrEmpty(filterDto.AcademicYear))
             query = query.Where(c => EF.Functions.ILike(c.AcademicYear, $"%{filterDto.AcademicYear}%"));
 
+        bool isDesc = filterDto.SortOrder == AssignmentSystem.Api.Models.Enums.SortOrder.Desc;
+        string sortBy = filterDto.SortBy?.ToLower().Trim() ?? "name";
+
+        query = sortBy switch
+        {
+            "section" => isDesc ? query.OrderByDescending(c => c.Section) : query.OrderBy(c => c.Section),
+            "academicyear" => isDesc ? query.OrderByDescending(c => c.AcademicYear) : query.OrderBy(c => c.AcademicYear),
+            "createdat" => isDesc ? query.OrderByDescending(c => c.CreatedAt) : query.OrderBy(c => c.CreatedAt),
+            _ => isDesc ? query.OrderByDescending(c => c.Name) : query.OrderBy(c => c.Name)
+        };
+
         // Calculate the total count of filtered classes before applying pagination
         var totalCount = await query.CountAsync();
 

@@ -29,6 +29,8 @@ export type TeacherAssignmentFilterDto = {
   subjectName?: string;
   subjectCode?: string;
   status?: string;
+  sortBy?: string;
+  sortOrder?: "Asc" | "Desc";
   pageNumber: number;
   pageSize: number;
 };
@@ -118,6 +120,25 @@ function getEmptyPagedResult(filter: TeacherAssignmentFilterDto): PagedTeacherAs
     filtered = filtered.filter((a) => a.status === filter.status);
   }
 
+  if (filter.sortBy) {
+    const isDesc = filter.sortOrder === "Desc";
+    const key = filter.sortBy.toLowerCase();
+    filtered.sort((a, b) => {
+      let valA: string = "";
+      let valB: string = "";
+      if (key === "title") { valA = a.title || ""; valB = b.title || ""; }
+      else if (key === "classname") { valA = a.className || ""; valB = b.className || ""; }
+      else if (key === "subjectname") { valA = a.subjectName || ""; valB = b.subjectName || ""; }
+      else if (key === "status") { valA = a.status || ""; valB = b.status || ""; }
+      else if (key === "createdat") { valA = a.createdAt || ""; valB = b.createdAt || ""; }
+      else { valA = a.dueDate || ""; valB = b.dueDate || ""; }
+
+      if (valA < valB) return isDesc ? 1 : -1;
+      if (valA > valB) return isDesc ? -1 : 1;
+      return 0;
+    });
+  }
+
   const totalCount = filtered.length;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const startIndex = (pageNumber - 1) * pageSize;
@@ -145,6 +166,8 @@ export async function getTeacherAssignments(
   if (filter.subjectName) query.set("subjectName", filter.subjectName);
   if (filter.subjectCode) query.set("subjectCode", filter.subjectCode);
   if (filter.status) query.set("status", filter.status);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(filter.pageNumber || 1));
   query.set("pageSize", String(filter.pageSize || 10));
 
@@ -287,6 +310,8 @@ export async function getTeacherSubmissions(
   if (filter.studentName) query.set("studentName", filter.studentName);
   if (filter.studentEmail) query.set("studentEmail", filter.studentEmail);
   if (filter.status) query.set("status", filter.status);
+  if (filter.sortBy) query.set("sortBy", filter.sortBy);
+  if (filter.sortOrder) query.set("sortOrder", filter.sortOrder);
   query.set("pageNumber", String(filter.pageNumber || 1));
   query.set("pageSize", String(filter.pageSize || 10));
 

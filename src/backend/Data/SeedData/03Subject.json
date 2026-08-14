@@ -1,17 +1,152 @@
 [
   {
-    "Id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
-    "Name": "Mathematics",
+    "Id": "bbbbbbbb-0001-4000-8000-000000000001",
+    "Name": "Algebra & Trigonometry",
     "Code": "MATH101"
   },
   {
-    "Id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
-    "Name": "Science",
-    "Code": "SCI101"
+    "Id": "bbbbbbbb-0002-4000-8000-000000000002",
+    "Name": "General Physics",
+    "Code": "PHYS101"
   },
   {
-    "Id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
-    "Name": "English",
+    "Id": "bbbbbbbb-0003-4000-8000-000000000003",
+    "Name": "Organic Chemistry",
+    "Code": "CHEM101"
+  },
+  {
+    "Id": "bbbbbbbb-0004-4000-8000-000000000004",
+    "Name": "World Literature",
     "Code": "ENG101"
+  },
+  {
+    "Id": "bbbbbbbb-0005-4000-8000-000000000005",
+    "Name": "Computer Programming I",
+    "Code": "CS101"
+  },
+  {
+    "Id": "bbbbbbbb-0006-4000-8000-000000000006",
+    "Name": "Data Structures & Algorithms",
+    "Code": "CS201"
+  },
+  {
+    "Id": "bbbbbbbb-0007-4000-8000-000000000007",
+    "Name": "Database Management Systems",
+    "Code": "CS301"
+  },
+  {
+    "Id": "bbbbbbbb-0008-4000-8000-000000000008",
+    "Name": "Web Development",
+    "Code": "CS302"
+  },
+  {
+    "Id": "bbbbbbbb-0009-4000-8000-000000000009",
+    "Name": "Calculus I",
+    "Code": "MATH201"
+  },
+  {
+    "Id": "bbbbbbbb-0010-4000-8000-000000000010",
+    "Name": "Calculus II",
+    "Code": "MATH202"
+  },
+  {
+    "Id": "bbbbbbbb-0011-4000-8000-000000000011",
+    "Name": "Linear Algebra",
+    "Code": "MATH301"
+  },
+  {
+    "Id": "bbbbbbbb-0012-4000-8000-000000000012",
+    "Name": "Biology I",
+    "Code": "BIO101"
+  },
+  {
+    "Id": "bbbbbbbb-0013-4000-8000-000000000013",
+    "Name": "Environmental Science",
+    "Code": "ENV101"
+  },
+  {
+    "Id": "bbbbbbbb-0014-4000-8000-000000000014",
+    "Name": "Microeconomics",
+    "Code": "ECON101"
+  },
+  {
+    "Id": "bbbbbbbb-0015-4000-8000-000000000015",
+    "Name": "Macroeconomics",
+    "Code": "ECON102"
+  },
+  {
+    "Id": "bbbbbbbb-0016-4000-8000-000000000016",
+    "Name": "World History",
+    "Code": "HIST101"
+  },
+  {
+    "Id": "bbbbbbbb-0017-4000-8000-000000000017",
+    "Name": "European History",
+    "Code": "HIST102"
+  },
+  {
+    "Id": "bbbbbbbb-0018-4000-8000-000000000018",
+    "Name": "Psychology 101",
+    "Code": "PSY101"
+  },
+  {
+    "Id": "bbbbbbbb-0019-4000-8000-000000000019",
+    "Name": "Sociology",
+    "Code": "SOC101"
+  },
+  {
+    "Id": "bbbbbbbb-0020-4000-8000-000000000020",
+    "Name": "Statistics & Probability",
+    "Code": "STAT101"
+  },
+  {
+    "Id": "bbbbbbbb-0021-4000-8000-000000000021",
+    "Name": "Software Engineering",
+    "Code": "CS401"
+  },
+  {
+    "Id": "bbbbbbbb-0022-4000-8000-000000000022",
+    "Name": "Artificial Intelligence",
+    "Code": "CS402"
+  },
+  {
+    "Id": "bbbbbbbb-0023-4000-8000-000000000023",
+    "Name": "Machine Learning",
+    "Code": "CS403"
+  },
+  {
+    "Id": "bbbbbbbb-0024-4000-8000-000000000024",
+    "Name": "Mobile App Development",
+    "Code": "CS404"
+  },
+  {
+    "Id": "bbbbbbbb-0025-4000-8000-000000000025",
+    "Name": "Cybersecurity Basics",
+    "Code": "CS405"
+  },
+  {
+    "Id": "bbbbbbbb-0026-4000-8000-000000000026",
+    "Name": "Discrete Mathematics",
+    "Code": "MATH401"
+  },
+  {
+    "Id": "bbbbbbbb-0027-4000-8000-000000000027",
+    "Name": "Quantum Mechanics",
+    "Code": "PHYS301"
+  },
+  {
+    "Id": "bbbbbbbb-0028-4000-8000-000000000028",
+    "Name": "Thermodynamics",
+    "Code": "PHYS302"
+  },
+  {
+    "Id": "bbbbbbbb-0029-4000-8000-000000000029",
+    "Name": "Biochemistry",
+    "Code": "CHEM201"
+  },
+  {
+    "Id": "bbbbbbbb-0030-4000-8000-000000000030",
+    "Name": "Creative Writing",
+    "Code": "ENG201"
   }
 ]
