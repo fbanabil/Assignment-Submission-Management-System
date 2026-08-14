@@ -220,13 +220,15 @@ Run the full platform (Database, API, Frontend, pgAdmin) in isolated containers 
    git clone https://github.com/fbanabil/Assignment-Submission-Management-System.git
    cd Assignment-Submission-Management-System
    ```
-2. **Launch the Container Stack**:
+2. **Put RSA public and private key in docker-compose.yml files backend environment (Make sure to save the file before later actions)**
+
+3. **Launch the Container Stack**:
    From the repository root directory, execute:
 
    ```bash
    docker compose -f src/docker-compose.yml up -d --build
    ```
-3. **Verify Running Services**:
+4. **Verify Running Services**:
    The containers will automatically run EF Core migrations and apply seed data:
 
    | Service                             | Access URL                                                    | Port     |
@@ -236,7 +238,7 @@ Run the full platform (Database, API, Frontend, pgAdmin) in isolated containers 
    | **Swagger API Documentation** | [http://localhost:8080/swagger](http://localhost:8080/swagger) | `8080` |
    | **pgAdmin Web Portal**        | [http://localhost:5050](http://localhost:5050)                 | `5050` |
    | **PostgreSQL Database**       | `localhost:5432`                                            | `5432` |
-4. **Shutdown Services**:
+5. **Shutdown Services**:
 
    ```bash
    docker compose -f src/docker-compose.yml down
