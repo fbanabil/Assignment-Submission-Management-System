@@ -39,7 +39,6 @@
     <Folder Include="Handlers\Auth\" />
     <Folder Include="Handlers\Student\" />
     <Folder Include="Handlers\Teacher\" />
-    <Folder Include="Tests\" />
     <Folder Include="wwwroot\assignments\" />
   </ItemGroup>
 
