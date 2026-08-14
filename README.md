@@ -193,11 +193,11 @@ AssignmentManager/
 
 The database is pre-seeded on first boot with rich demo accounts across all three user roles:
 
-| Role              | Name                 | Email                            | Password                | Access / Scope                                    |
-| :---------------- | :------------------- | :------------------------------- | :---------------------- | :------------------------------------------------ |
-| **Admin**   | Demo Admin           | `demoadmin@gmail.com`          |`demoadminpassword`  | System-wide management & audit access             |
-| **Teacher** | Demo Teacher         | `demoteacher@gmail.com`        |`demoteacherpassword` | Manages assignments & grades for assigned classes |
-| **Student** | Demo Student         | `demostudent@gmail.com`        |`demostudentpassword` | Submits assignments & tracks class grades         |
+| Role              | Name         | Email                     | Password                | Access / Scope                                    |
+| :---------------- | :----------- | :------------------------ | :---------------------- | :------------------------------------------------ |
+| **Admin**   | Demo Admin   | `demoadmin@gmail.com`   | `demoadminpassword`   | System-wide management & audit access             |
+| **Teacher** | Demo Teacher | `demoteacher@gmail.com` | `demoteacherpassword` | Manages assignments & grades for assigned classes |
+| **Student** | Demo Student | `demostudent@gmail.com` | `demostudentpassword` | Submits assignments & tracks class grades         |
 
 ---
 
@@ -264,7 +264,7 @@ dotnet ef database update
 dotnet run
 ```
 
-The API will start at `http://localhost:8080` (or `http://localhost:5000` depending on `appsettings.json` launch profiles).
+The API will start at `http://localhost:8080` (or `http://localhost:5000 or https://localhost:7209` depending on `appsettings.json` launch profiles).
 
 #### 3. Run Next.js Frontend
 
@@ -275,6 +275,7 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+**Make sure that running ports are set perfectly in appsettings.json in frontend and .env in backend**
 
 ---
 
