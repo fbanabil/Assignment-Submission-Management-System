@@ -38,7 +38,7 @@ Engineered with a decoupled architecture featuring an **ASP.NET Core 9 Web API**
       - [4. Run Next.js Frontend](#4-run-nextjs-frontend)
   - [⚙️ Environment Variables](#️-environment-variables)
     - [Docker / Backend Configuration (`src/docker-compose.yml`)](#docker--backend-configuration-srcdocker-composeyml)
-    - [Frontend Configuration (`src/frontend/.env.local`)](#frontend-configuration-srcfrontendenvlocal)
+    - [Frontend Configuration (`src/frontend/.env.local`) - Make sure this exists](#frontend-configuration-srcfrontendenvlocal---make-sure-this-exists)
   - [📡 API Documentation](#-api-documentation)
     - [Key API Endpoint Summary](#key-api-endpoint-summary)
       - [Authentication (`/api/Auth`)](#authentication-apiauth)
@@ -338,12 +338,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `JwtSettings__PrivateKeyPath`          | *[Path to pem file]*           | 2048-bit Private Key for RS256 token signing |
 | `JwtSettings__PublicKeyPath`           | *[Path to pem file]*           | 2048-bit Public Key for token verification   |
 
-### Frontend Configuration (`src/frontend/.env.local`)
+### Frontend Configuration (`src/frontend/.env.local`) - Make sure this exists
 
 | Variable                     | Default Value                 | Description                       |
 | :--------------------------- | :---------------------------- | :-------------------------------- |
-| `NEXT_PUBLIC_API_URL`      | `http://localhost:8080/api` | Base API URL used by Axios client |
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080/api` | Fallback API base URL endpoint    |
+| `NEXT_PUBLIC_API_URL`      | `http://localhost:{Port No: Check backend log}/api` | Base API URL used by Axios client |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:{Port No:Check backend log}/api` | Fallback API base URL endpoint    |
 
 ---
 
