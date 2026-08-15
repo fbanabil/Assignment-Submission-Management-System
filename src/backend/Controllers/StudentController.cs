@@ -113,7 +113,6 @@ namespace Backend.Controllers
         /// Supports DELETE /api/Student/Submissions/{id}, DELETE /api/Student/Unsubmit/{id}, and POST /api/Student/Unsubmit/{id}.
         /// </summary>
         [HttpDelete("/api/Student/Submissions/{id}")]
-        [HttpDelete("/api/Student/Unsubmit/{id}")]
         [HttpPost("/api/Student/Unsubmit/{id}")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Unsubmit([FromRoute] Guid id)

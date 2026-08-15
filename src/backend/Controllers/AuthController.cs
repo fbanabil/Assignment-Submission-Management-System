@@ -35,7 +35,7 @@ namespace Backend.Controllers
         public async Task<IActionResult> CreateUser([FromBody] UserCreateDto dto)
         {
             _logger.LogInformation("AuthController: CreateUser requested for Email:{Email}, Role:{Role}", dto?.Email, dto?.Role);
-            var result = await _userAuthHandler.HandleCreateUserAsync(dto);
+            var result = await _userAuthHandler.HandleCreateUserAsync(dto!);
             _logger.LogInformation("AuthController: CreateUser completed");
             return result;
         }
@@ -53,7 +53,7 @@ namespace Backend.Controllers
         public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
         {
             _logger.LogInformation("AuthController: Login requested for Email:{Email}", dto?.Email);
-            var result = await _authHandler.HandleLoginAsync(dto);
+            var result = await _authHandler.HandleLoginAsync(dto!);
             _logger.LogInformation("AuthController: Login completed");
             return result;
         }
@@ -66,7 +66,7 @@ namespace Backend.Controllers
         /// </summary>
         /// <returns>An IActionResult representing the result of the refresh token operation.</returns>
         [HttpPost]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> RefreshToken()
         {
             _logger.LogInformation("AuthController: RefreshToken requested");

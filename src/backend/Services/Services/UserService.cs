@@ -243,7 +243,7 @@ public class UserService : IUserService
                 Id = Guid.NewGuid(),
                 Token = hashedRefreshToken,
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7), // Set expiration as needed
+                ExpiresAt = DateTime.UtcNow.AddDays(15), // Set expiration as needed
                 IsUsed = false,
                 UserId = user.Id
             });
@@ -284,24 +284,19 @@ public class UserService : IUserService
 
         // Mark the token as used
         token.IsUsed = true;
-        
+
+
         // Assuming you have a way to link refresh tokens to users, e.g., a UserId property in RefreshToken
         User? user = await _context.Users.FindAsync(token.UserId);
 
-        // Validate that the user ID from the current HTTP context matches the user associated with the refresh token
-        var userIdClaim = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedException("User ID claim not found.");
-        if (Guid.TryParse(userIdClaim.Value, out Guid userId))
+        if (user == null)
         {
-            if(user == null || user.Id != userId)
-            {
-                _logger.LogWarning("UserService: Refresh token user mismatch for UserId:{UserId}", userId);
-                throw new ForbiddenException("Invalid refresh token for the current user.");
-            }
+            throw new UnauthorizedException("User associated with the refresh token not found.");
         }
-        else
-        {
-            throw new UnauthorizedException("Invalid user ID claim.");
-        }
+
+
+        // IsUsed = true for all refresh tokens associated with the same user
+        await _context.RefreshTokens.Where(rt => rt.UserId == user!.Id && !rt.IsUsed).ForEachAsync(rt => rt.IsUsed = true);
 
 
         // Mark the token as used and save changes

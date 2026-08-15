@@ -25,7 +25,7 @@ namespace Backend.Handlers.Auth
         {
             _logger.LogInformation("AuthHandler: Attempting login for Email:{Email}", dto?.Email);
             // Validate the user credentials
-            User? user = await _userService.AuthenticateUserAsync(dto.Email, dto.Password);
+            User? user = await _userService.AuthenticateUserAsync(dto!.Email, dto.Password);
             if (user == null)
             {
                 _logger.LogWarning("AuthHandler: Invalid login credentials for Email:{Email}", dto?.Email);
@@ -36,16 +36,18 @@ namespace Backend.Handlers.Auth
             string token = await _userService.GenerateJwtToken(user);
             string refreshToken = await _userService.GenerateRefreshToken(user);
 
+            var httpContext = _httpContextAccessor.HttpContext;
             // Set refreshToken as HttpOnly cookie
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Expires = DateTime.UtcNow.AddDays(7),
-                SameSite = SameSiteMode.Strict,
-                Secure = true // Set to true in production for HTTPS
+                SameSite = SameSiteMode.None,
+                Path = "/",
+                Secure = httpContext?.Request.IsHttps ?? false
             };
 
-            _httpContextAccessor.HttpContext?.Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+            httpContext?.Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
             _logger.LogInformation("AuthHandler: User {UserId} logged in successfully", user.Id);
             return new OkObjectResult(new { token });
         }
@@ -54,7 +56,8 @@ namespace Backend.Handlers.Auth
         {
             _logger.LogInformation("AuthHandler: Attempting token refresh");
             var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext == null || !httpContext.Request.Cookies.TryGetValue("refreshToken", out string? refreshToken))
+            var refreshToken = httpContext?.Request.Cookies["refreshToken"];
+            if (httpContext == null || refreshToken == null)
             {
                 _logger.LogWarning("AuthHandler: Refresh token missing in cookies");
                 return new UnauthorizedObjectResult(new { message = "Refresh token is missing." });
@@ -77,8 +80,9 @@ namespace Backend.Handlers.Auth
             {
                 HttpOnly = true,
                 Expires = DateTime.UtcNow.AddDays(7),
-                SameSite = SameSiteMode.Strict,
-                Secure = true // Set to true in production for HTTPS
+                SameSite = SameSiteMode.None,
+                Path = "/",
+                Secure = httpContext.Request.IsHttps
             };
             httpContext.Response.Cookies.Append("refreshToken", newRefreshToken, cookieOptions);
 
@@ -104,7 +108,12 @@ namespace Backend.Handlers.Auth
                 return new UnauthorizedObjectResult(new { message = "Invalid refresh token." });
             }
             // Invalidate the refresh token in the database
-            httpContext.Response.Cookies.Delete("refreshToken");
+            httpContext.Response.Cookies.Delete("refreshToken", new CookieOptions
+            {
+                Path = "/",
+                SameSite = SameSiteMode.None,
+                Secure = httpContext.Request.IsHttps
+            });
 
             // Invalidate the JWT token in the database
             string? jwtToken = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");

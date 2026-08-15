@@ -33,8 +33,9 @@ Engineered with a decoupled architecture featuring an **ASP.NET Core 9 Web API**
     - [Option A: Docker Compose Deployment (Recommended)](#option-a-docker-compose-deployment-recommended)
     - [Option B: Manual Local Development Setup](#option-b-manual-local-development-setup)
       - [1. Start Database Container](#1-start-database-container)
-      - [2. Run ASP.NET Core Backend API](#2-run-aspnet-core-backend-api)
-      - [3. Run Next.js Frontend](#3-run-nextjs-frontend)
+    - [2. Follow step 2 of option A](#2-follow-step-2-of-option-a)
+      - [3. Run ASP.NET Core Backend API](#3-run-aspnet-core-backend-api)
+      - [4. Run Next.js Frontend](#4-run-nextjs-frontend)
   - [⚙️ Environment Variables](#️-environment-variables)
     - [Docker / Backend Configuration (`src/docker-compose.yml`)](#docker--backend-configuration-srcdocker-composeyml)
     - [Frontend Configuration (`src/frontend/.env.local`)](#frontend-configuration-srcfrontendenvlocal)
@@ -220,31 +221,50 @@ Run the full platform (Database, API, Frontend, pgAdmin) in isolated containers 
    git clone https://github.com/fbanabil/Assignment-Submission-Management-System.git
    cd Assignment-Submission-Management-System
    ```
-2. **Put RSA public and private key in docker-compose.yml files backend environment (Make sure to save the file before later actions)**
+2. **Generate Private and Public RSA Keys**:
 
-   **As these keys are not used any other project keys are given to compose-file. Don't use it in another project as they are not safe to use anymore.**
-   **In case of production please follow instructions below.** 
+   Generate the RSA keys inside `/src/Backend/Keys/`.
 
-   **To generate RSA keys: In terminal**
+   If the `Keys` directory does not already exist, create it:
+
    ```bash
-   openssl genrsa -out private.pem 2048
+   mkdir src\Backend\Keys
    ```
-   It creates private.pem
-   ```bash
-   openssl rsa -in private.pem -pubout -out public.pem
-   ```
-   It generate public.pem.
-   **While getting key from this file and put into docker-compose it is needed to escape the newlines.**
-   
 
+   Generate the private key:
+
+   ```bash
+   openssl genrsa -out src\Backend\Keys\private.pem 2048
+   ```
+
+   Generate the public key from the private key:
+
+   ```bash
+   openssl rsa -in src\Backend\Keys\private.pem -pubout -out src\Backend\Keys\public.pem
+   ```
+
+   This will create the following files:
+
+   ```text
+   src/
+   └── Backend/
+       └── Keys/
+           ├── private.pem
+           └── public.pem
+   ```
+
+   > **Note:** Keep `private.pem` secure and do not commit it to the repository.
+   >
 3. **Launch the Container Stack**:
+
    From the repository root directory, execute:
 
    ```bash
    docker compose -f src/docker-compose.yml up -d --build
    ```
 4. **Verify Running Services**:
-   The containers will automatically run EF Core migrations and apply seed data:
+
+   The containers will automatically run EF Core migrations and apply seed data.
 
    | Service                             | Access URL                                                    | Port     |
    | :---------------------------------- | :------------------------------------------------------------ | :------- |
@@ -254,6 +274,8 @@ Run the full platform (Database, API, Frontend, pgAdmin) in isolated containers 
    | **pgAdmin Web Portal**        | [http://localhost:5050](http://localhost:5050)                 | `5050` |
    | **PostgreSQL Database**       | `localhost:5432`                                            | `5432` |
 5. **Shutdown Services**:
+
+   To stop and remove the containers, run:
 
    ```bash
    docker compose -f src/docker-compose.yml down
@@ -272,7 +294,9 @@ cd src
 docker compose up -d postgres pgadmin
 ```
 
-#### 2. Run ASP.NET Core Backend API
+### 2. Follow step 2 of option A
+
+#### 3. Run ASP.NET Core Backend API
 
 ```bash
 cd src/backend
@@ -283,7 +307,7 @@ dotnet run
 
 The API will start at `http://localhost:8080` (or `http://localhost:5000 or https://localhost:7209` depending on `appsettings.json` launch profiles).
 
-#### 3. Run Next.js Frontend
+#### 4. Run Next.js Frontend
 
 ```bash
 cd src/frontend
@@ -308,8 +332,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `ConnectionStrings__DefaultConnection` | `Host=assignment_postgres;...` | Npgsql EF Core connection string             |
 | `JwtSettings__Issuer`                  | `AssignmentManager.API`        | Token issuer domain string                   |
 | `JwtSettings__Audience`                | `AssignmentManager.UI`         | Token target audience string                 |
-| `JwtSettings__PrivateKey`              | *[RSA PEM String]*             | 2048-bit Private Key for RS256 token signing |
-| `JwtSettings__PublicKey`               | *[RSA PEM String]*             | 2048-bit Public Key for token verification   |
+| `JwtSettings__PrivateKeyPath`          | *[Path to pem file]*           | 2048-bit Private Key for RS256 token signing |
+| `JwtSettings__PublicKeyPath`           | *[Path to pem file]*           | 2048-bit Public Key for token verification   |
 
 ### Frontend Configuration (`src/frontend/.env.local`)
 

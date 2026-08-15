@@ -260,33 +260,7 @@ namespace Tests.ServiceTests
             Assert.True(dbToken.IsUsed);
         }
 
-        [Fact]
-        public async Task GetUserByRefreshTokenAsync_ShouldThrowForbidden_WhenUserIdMismatch()
-        {
-            // Arrange
-            var user = new User { Id = Guid.NewGuid(), Email = "user1@test.com", FullName = "User 1" };
-            _context.Users.Add(user);
-            _context.RefreshTokens.Add(new RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                Token = "hashed_valid_token",
-                UserId = user.Id,
-                IsUsed = false,
-                ExpiresAt = DateTime.UtcNow.AddDays(1)
-            });
-            await _context.SaveChangesAsync();
 
-            // Claims for different user
-            _httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
-            }, "Test"));
-
-            _mockAuthHelper.Setup(a => a.HashTokenAsync("raw_token")).ReturnsAsync("hashed_valid_token");
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ForbiddenException>(() => _service.GetUserByRefreshTokenAsync("raw_token"));
-        }
 
         [Fact]
         public async Task InvalidateRefreshTokenAndJwtToken_ShouldMarkTokenUsed_AndBlacklistJwt()

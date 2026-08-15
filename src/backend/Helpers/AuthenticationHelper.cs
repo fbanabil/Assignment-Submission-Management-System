@@ -26,11 +26,13 @@ namespace Backend.Helpers
             _configuration = configuration;
         }
 
-        public Task<string> CreateJwtToken(UserPayload payload)
+        public async Task<string> CreateJwtToken(UserPayload payload)
         {
+            var privateKey = await File.ReadAllTextAsync(_configuration["JwtSettings:PrivateKeyPath"]!); 
+
             // Create a JWT token using RSA private key from configuration
             using var rsa = System.Security.Cryptography.RSA.Create();
-            rsa.ImportFromPem(_configuration["JwtSettings:PrivateKey"]);
+            rsa.ImportFromPem(privateKey);
 
             // Create signing credentials using the RSA private key
             var key = new RsaSecurityKey(rsa.ExportParameters(true));
@@ -56,7 +58,7 @@ namespace Backend.Helpers
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
-            return Task.FromResult(jwt);
+            return jwt;
         }
 
 

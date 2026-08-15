@@ -11,12 +11,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace Backend.ConfigurationExtension;
 
 public static class AddConfigurations
 {
-    public static void AddServices(this IServiceCollection services, IConfiguration configuration)
+    public static async Task AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers()
             .AddJsonOptions(options =>
@@ -111,7 +112,9 @@ public static class AddConfigurations
 
         // Add Authentication and Authorization
         var jwtSettingsSection = configuration.GetSection("JwtSettings");
-        var publicKey = jwtSettingsSection.GetValue<string>("PublicKey");
+
+        // Load the public key from a file
+        var publicKey = await File.ReadAllTextAsync(jwtSettingsSection.GetValue<string>("PublicKeyPath")!);
 
         var rsa = RSA.Create();
         rsa.ImportFromPem(publicKey);
@@ -132,6 +135,7 @@ public static class AddConfigurations
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
+                    ClockSkew = TimeSpan.Zero, // Optional: Set clock skew to zero for immediate expiration
 
                     ValidIssuer = jwtSettingsSection.GetValue<string>("Issuer"),
                     ValidAudience = jwtSettingsSection.GetValue<string>("Audience"),
