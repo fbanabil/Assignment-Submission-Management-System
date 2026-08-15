@@ -237,13 +237,13 @@ Run the full platform (Database, API, Frontend, pgAdmin) in isolated containers 
    Generate the private key:
 
    ```bash
-   openssl genrsa -out src\Backend\Keys\private.pem 2048
+   openssl genrsa -out src\Backend\Keys\private_key.pem 2048
    ```
 
    Generate the public key from the private key:
 
    ```bash
-   openssl rsa -in src\Backend\Keys\private.pem -pubout -out src\Backend\Keys\public.pem
+   openssl rsa -in src\Backend\Keys\private_key.pem -pubout -out src\Backend\Keys\public_key.pem
    ```
 
    This will create the following files:

@@ -26,6 +26,7 @@ COPY --from=publish /app/publish .
 # Copy SeedData and wwwroot folders into runtime container
 COPY --from=build /src/Data /app/Data
 COPY --from=build /src/wwwroot /app/wwwroot
+COPY --from=build /src/Keys /app/Keys
 
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_HTTP_PORTS=8080
