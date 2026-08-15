@@ -147,6 +147,7 @@ Engineered with a decoupled architecture featuring an **ASP.NET Core 9 Web API**
 
 ```
 AssignmentManager/
+├── .github/                            # GitHub Actions workflows & CI configuration
 ├── src/
 │   ├── backend/                        # ASP.NET Core 9 Web API
 │   │   ├── ConfigurationExtension/     # Service collection & JWT registration
@@ -156,34 +157,36 @@ AssignmentManager/
 │   │   ├── DTOs/                       # Strongly-typed Data Transfer Objects
 │   │   ├── Handlers/                   # CQRS-style business domain request handlers
 │   │   ├── Helpers/                    # Auth, Password hashing & Seed helpers
+│   │   ├── Keys/                       # RSA keys for asymmetric JWT signing
 │   │   ├── Middlewares/                # Exception handling, Serilog, Token Revocation
 │   │   ├── Migrations/                 # EF Core database schema migrations
-│   │   ├── Models/                     # Entity models and Enums
+│   │   ├── Models/                     # Entity models (Entities/) and Enums (Enums/)
 │   │   ├── Services/                   # Core business logic interfaces & implementations
+│   │   ├── StartupTasks/               # Background hosted services for startup database seeding
 │   │   ├── Validators/                 # FluentValidation request rules
-│   │   ├── Dockerfile                  # Multi-stage backend build file
 │   │   ├── Backend.csproj              # .NET 9 Project dependencies
-│   │   ├── private_key.pem             # RSA Private key for JWT signing
-│   │   └── public_key.pem              # RSA Public key for JWT verification
+│   │   ├── Dockerfile                  # Multi-stage backend container setup
+│   │   └── Program.cs                  # Web API application entry point
 │   │
 │   ├── frontend/                       # Next.js 16 Application
+│   │   ├── public/                     # Static visual assets & icons
 │   │   ├── src/
-│   │   │   ├── app/                    # Next.js App Router (admin, teacher, student, login)
-│   │   │   ├── components/             # Reusable UI components & layouts
-│   │   │   ├── lib/                    # Axios API instance & Auth Context provider
-│   │   │   └── types/                  # TypeScript interface definitions
+│   │   │   ├── app/                    # Next.js App Router pages (admin, teacher, student, login)
+│   │   │   ├── components/             # Reusable UI components & role-based dashboards
+│   │   │   └── lib/                    # Axios API client modules & Auth Context provider
 │   │   ├── Dockerfile                  # Multi-stage frontend container setup
 │   │   └── package.json                # Frontend dependencies & scripts
 │   │
 │   ├── Tests/                          # xUnit Automated Test Suite
 │   │   ├── ControllerTests/            # Controller HTTP status & payload tests
 │   │   ├── DatabaseTests/              # EF Core CRUD & relational constraint tests
-│   │   ├── HandlerTests/               # Business workflow & permission logic tests
+│   │   ├── HandlerTests/               # CQRS workflow & permission logic tests
+│   │   ├── Helpers/                    # Mock helpers & DB context test factories
 │   │   ├── ServiceTests/               # Core service unit tests
 │   │   └── Tests.csproj                # xUnit, Moq & In-Memory DB test configuration
 │   │
 │   ├── docker-compose.yml              # Container orchestration (API, Frontend, Postgres, pgAdmin)
-│   └── docker-compose.yml.override     # Local development docker settings
+│   └── docker-compose.override.yml     # Local development docker settings & port overrides
 ├── LICENSE                             # MIT License
 └── README.md                           # Documentation
 ```
